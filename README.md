@@ -1,11 +1,20 @@
-
 # Maus Ray Tracing in One Weekend
 
 I made this project in rust following the [Ray Tracing in One Weekend](https://raytracing.github.io/books/RayTracingInOneWeekend.html) Book. 
 
+## Usage
+```
+Usage: maus_raytracing_in_one_weekend --filename <FILE>
+
+Options:
+  -f, --filename <FILE>
+  -h, --help             Print help
+  -V, --version          Print version
+```
+
 ## Running
 ```sh
-cargo run -qr > image.ppm
+cargo run -qr -- -f test
 ```
 
 ## Final Result

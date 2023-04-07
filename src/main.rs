@@ -17,10 +17,14 @@ mod material;
 use material::{Lambertian, Metal, Material, Dielectric};
 
 use std::io;
-use std::io::Write;
+use std::fs::File;
+use std::io::{BufWriter, Write};
 use std::rc::Rc;
 
 use rand::prelude::*;
+
+use clap::Parser;
+
 
 const ASPECT_RATIO: f32 = 3.0 / 2.0;
 const IMAGE_WIDTH: u32 = 1200;
@@ -28,16 +32,32 @@ const IMAGE_HEIGHT: u32 = (IMAGE_WIDTH as f32 / ASPECT_RATIO) as u32;
 const SAMPLES_PER_PIXEL: u32 = 500;
 const MAX_DEPTH: u32 = 50;
 
+
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    // Name of the file to output
+    #[arg(short, long, value_name = "FILE")]
+    filename: String,
+}
+
 fn main() {
+    let args = Args::parse();
+
+    let filename = format!("{}.ppm", args.filename);
+    let file = File::create(filename).expect("Unable to create file");
+    let mut file = BufWriter::new(file);
+
+    let ppm_header = format!("P3\n{IMAGE_WIDTH} {IMAGE_HEIGHT}\n255\n");
+    write_to_file(&mut file, ppm_header.as_bytes());
+
     let mut rng = rand::thread_rng();
     let camera = setup_camera();
     let world = random_scene(&mut rng);
 
-    println!("P3\n{IMAGE_WIDTH} {IMAGE_HEIGHT}\n255");
-
     for j in (0..IMAGE_HEIGHT).rev() {
-        eprint!("\rScanlines remaining: {j:03}");
-        io::stderr().flush().unwrap();
+        print!("\rScanlines remaining: {j:03}");
+        io::stdout().flush().unwrap();
         for i in 0..IMAGE_WIDTH {
             let mut pixel_color = Color::new();
             for _ in 0..SAMPLES_PER_PIXEL {
@@ -46,14 +66,25 @@ fn main() {
                 let ray = camera.get_ray(&mut rng, u, v);
                 pixel_color += ray_color(&mut rng, &ray, &world, MAX_DEPTH);
             }
-            write_color(pixel_color, SAMPLES_PER_PIXEL);
+            write_color(&mut file, pixel_color, SAMPLES_PER_PIXEL);
         }
     }
 
-    eprintln!("\nDone.");
+    if file.flush().is_err() {
+        eprintln!("Write Failed");
+        std::process::exit(1);
+    };
+    println!("\nDone.");
 }
 
-fn write_color(pixel_color: Color, samples_per_pixel: u32) {
+fn write_to_file(file: &mut BufWriter<File>, data_as_bytes: &[u8]) {
+    if file.write_all(data_as_bytes).is_err() {
+        eprintln!("Write Failed");
+        std::process::exit(1);
+    }
+}
+
+fn write_color(file: &mut BufWriter<File>, pixel_color: Color, samples_per_pixel: u32) {
     let mut r = pixel_color.x();
     let mut g = pixel_color.y();
     let mut b = pixel_color.z();
@@ -63,12 +94,14 @@ fn write_color(pixel_color: Color, samples_per_pixel: u32) {
     g = (scale * g).sqrt();
     b = (scale * b).sqrt();
 
-    println!(
-        "{} {} {}",
+    let point = format!(
+        "{} {} {}\n",
         (256.0 * r.clamp(0.0, 0.999)) as u32,
         (256.0 * g.clamp(0.0, 0.999)) as u32,
         (256.0 * b.clamp(0.0, 0.999)) as u32
     );
+
+    write_to_file(file, point.as_bytes());
 }
 
 fn ray_color(rng: &mut ThreadRng, ray: &Ray, world: &HittableList, depth: u32) -> Color {
