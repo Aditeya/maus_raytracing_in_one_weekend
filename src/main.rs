@@ -14,24 +14,21 @@ mod camera;
 use camera::Camera;
 
 mod material;
-use material::{Lambertian, Metal, Material, Dielectric};
+use material::{Dielectric, Lambertian, Material, Metal};
 
-use std::io;
 use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::rc::Rc;
 
+use clap::Parser;
+use indicatif::{ProgressBar, ProgressStyle};
 use rand::prelude::*;
 
-use clap::Parser;
-
-
 const ASPECT_RATIO: f32 = 3.0 / 2.0;
-const IMAGE_WIDTH: u32 = 1200;
+const IMAGE_WIDTH: u32 = 120;
 const IMAGE_HEIGHT: u32 = (IMAGE_WIDTH as f32 / ASPECT_RATIO) as u32;
 const SAMPLES_PER_PIXEL: u32 = 500;
 const MAX_DEPTH: u32 = 50;
-
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -51,13 +48,21 @@ fn main() {
     let ppm_header = format!("P3\n{IMAGE_WIDTH} {IMAGE_HEIGHT}\n255\n");
     write_to_file(&mut file, ppm_header.as_bytes());
 
+    let progress_bar = ProgressBar::new(IMAGE_HEIGHT as u64);
+    progress_bar.set_style(
+        ProgressStyle::with_template(
+            "{spinner:.red} [{elapsed_precise}] [{wide_bar:.cyan/blue}] {pos:>4}/{len:4} {msg}",
+        )
+        .unwrap(),
+    );
+    progress_bar.set_message("WORK");
+
     let mut rng = rand::thread_rng();
     let camera = setup_camera();
     let world = random_scene(&mut rng);
 
     for j in (0..IMAGE_HEIGHT).rev() {
-        print!("\rScanlines remaining: {j:03}");
-        io::stdout().flush().unwrap();
+        progress_bar.inc(1);
         for i in 0..IMAGE_WIDTH {
             let mut pixel_color = Color::new();
             for _ in 0..SAMPLES_PER_PIXEL {
@@ -74,7 +79,8 @@ fn main() {
         eprintln!("Write Failed");
         std::process::exit(1);
     };
-    println!("\nDone.");
+
+    progress_bar.finish_with_message("DONE");
 }
 
 fn write_to_file(file: &mut BufWriter<File>, data_as_bytes: &[u8]) {
@@ -115,8 +121,11 @@ fn ray_color(rng: &mut ThreadRng, ray: &Ray, world: &HittableList, depth: u32) -
         let mut scattered: Ray = Ray::new(&Vec3::new(), &Vec3::new());
         let mut attenutation: Color = Color::new();
 
-        if rec.mat_ptr.scatter(rng, ray, &rec, &mut attenutation, &mut scattered) {
-            return attenutation * ray_color(rng, &scattered, world, depth-1);
+        if rec
+            .mat_ptr
+            .scatter(rng, ray, &rec, &mut attenutation, &mut scattered)
+        {
+            return attenutation * ray_color(rng, &scattered, world, depth - 1);
         }
 
         return Color::new();
@@ -128,11 +137,11 @@ fn ray_color(rng: &mut ThreadRng, ray: &Ray, world: &HittableList, depth: u32) -
 }
 
 fn setup_camera() -> Camera {
-    let lookfrom      = Point3::with_values( 13.0, 2.0, 3.0);
-    let lookat        = Point3::with_values(  0.0, 0.0, 0.0);
-    let vup           =   Vec3::with_values(  0.0, 1.0, 0.0);
-    let vertical_fov  = 20.0;
-    let aperture      = 0.1;
+    let lookfrom = Point3::with_values(13.0, 2.0, 3.0);
+    let lookat = Point3::with_values(0.0, 0.0, 0.0);
+    let vup = Vec3::with_values(0.0, 1.0, 0.0);
+    let vertical_fov = 20.0;
+    let aperture = 0.1;
     let dist_to_focus = 10.0;
     Camera::new(
         lookfrom,
@@ -141,15 +150,20 @@ fn setup_camera() -> Camera {
         vertical_fov,
         ASPECT_RATIO,
         aperture,
-        dist_to_focus
+        dist_to_focus,
     )
 }
 
 fn random_scene(rng: &mut ThreadRng) -> HittableList {
     let mut world = HittableList::new();
 
-    let ground_material: Rc<Box<dyn Material>> = Rc::new(Box::new(Lambertian::new(Color::with_values(0.5, 0.5, 0.5))));
-    world.add(Rc::new(Box::new(Sphere::new(Point3::with_values(0.0, -1000.0, 0.0), 1000.0, &ground_material))));
+    let ground_material: Rc<Box<dyn Material>> =
+        Rc::new(Box::new(Lambertian::new(Color::with_values(0.5, 0.5, 0.5))));
+    world.add(Rc::new(Box::new(Sphere::new(
+        Point3::with_values(0.0, -1000.0, 0.0),
+        1000.0,
+        &ground_material,
+    ))));
 
     for a in -11..11 {
         for b in -11..11 {
@@ -174,19 +188,37 @@ fn random_scene(rng: &mut ThreadRng) -> HittableList {
                     sphere_material = Rc::new(Box::new(Dielectric::new(1.5)));
                 }
 
-                world.add(Rc::new(Box::new(Sphere::new(center, 0.2, &sphere_material))));
+                world.add(Rc::new(Box::new(Sphere::new(
+                    center,
+                    0.2,
+                    &sphere_material,
+                ))));
             }
         }
     }
 
     let material_1: Rc<Box<dyn Material>> = Rc::new(Box::new(Dielectric::new(1.5)));
-    world.add(Rc::new(Box::new(Sphere::new(Point3::with_values(0.0, 1.0, 0.0), 1.0, &material_1))));
+    world.add(Rc::new(Box::new(Sphere::new(
+        Point3::with_values(0.0, 1.0, 0.0),
+        1.0,
+        &material_1,
+    ))));
 
-    let material_2: Rc<Box<dyn Material>> = Rc::new(Box::new(Lambertian::new(Color::with_values(0.4, 0.2, 0.1))));
-    world.add(Rc::new(Box::new(Sphere::new(Point3::with_values(-4.0, 1.0, 0.0), 1.0, &material_2))));
+    let material_2: Rc<Box<dyn Material>> =
+        Rc::new(Box::new(Lambertian::new(Color::with_values(0.4, 0.2, 0.1))));
+    world.add(Rc::new(Box::new(Sphere::new(
+        Point3::with_values(-4.0, 1.0, 0.0),
+        1.0,
+        &material_2,
+    ))));
 
-    let material_3: Rc<Box<dyn Material>> = Rc::new(Box::new(Metal::new(Color::with_values(0.7, 0.6, 0.5), 0.0)));
-    world.add(Rc::new(Box::new(Sphere::new(Point3::with_values(4.0, 1.0, 0.0), 1.0, &material_3))));
+    let material_3: Rc<Box<dyn Material>> =
+        Rc::new(Box::new(Metal::new(Color::with_values(0.7, 0.6, 0.5), 0.0)));
+    world.add(Rc::new(Box::new(Sphere::new(
+        Point3::with_values(4.0, 1.0, 0.0),
+        1.0,
+        &material_3,
+    ))));
 
     world
 }
