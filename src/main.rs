@@ -21,7 +21,6 @@ use std::io::Write;
 use std::rc::Rc;
 
 use rand::prelude::*;
-use rayon::prelude::*;
 
 const ASPECT_RATIO: f32 = 3.0 / 2.0;
 const IMAGE_WIDTH: u32 = 1200;
@@ -34,10 +33,10 @@ fn main() {
     let camera = setup_camera();
     let world = random_scene(&mut rng);
 
-    println!("P3\n{} {}\n255", IMAGE_WIDTH, IMAGE_HEIGHT);
+    println!("P3\n{IMAGE_WIDTH} {IMAGE_HEIGHT}\n255");
 
     for j in (0..IMAGE_HEIGHT).rev() {
-        eprint!("\rScanlines remaining: {:03}", j);
+        eprint!("\rScanlines remaining: {j:03}");
         io::stderr().flush().unwrap();
         for i in 0..IMAGE_WIDTH {
             let mut pixel_color = Color::new();

@@ -20,7 +20,7 @@ impl Default for HitRecord {
         Self {
             p: Point3::new(),
             normal: Vec3::new(),
-            mat_ptr: Rc::new(Box::<Lambertian>::new(Default::default())),
+            mat_ptr: Rc::new(Box::<Lambertian>::default()),
             t: 0.0,
             front_face: false,
         }

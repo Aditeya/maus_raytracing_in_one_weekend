@@ -4,8 +4,6 @@ use crate::{
     vec3::{cross, Point3, Vec3, random_in_unit_disk},
 };
 
-const FOCAL_LEGNTH: f32 = 1.0;
-
 pub struct Camera {
     origin: Point3,
     lower_left_corner: Point3,
