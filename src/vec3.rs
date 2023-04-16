@@ -9,29 +9,33 @@ pub type Color = Vec3;
 
 #[derive(Debug, Copy, Clone)]
 pub struct Vec3 {
-    e: [f32; 3],
+    e: [f64; 3],
 }
 
 impl Vec3 {
     pub fn new() -> Self {
         Self { e: [0.0, 0.0, 0.0] }
     }
+
+    pub fn with_value(e: f64) -> Self {
+        Self { e: [e, e, e] }
+    }
     
-    pub fn with_values(e1: f32, e2: f32, e3: f32) -> Self {
+    pub fn with_values(e1: f64, e2: f64, e3: f64) -> Self {
         Self { e: [e1, e2, e3] }
     }
 
     pub fn random(rng: &mut ThreadRng) -> Self {
         Self {
             e: [
-                rng.gen::<f32>(),
-                rng.gen::<f32>(),
-                rng.gen::<f32>(),
+                rng.gen::<f64>(),
+                rng.gen::<f64>(),
+                rng.gen::<f64>(),
             ]
         }
     }
 
-    pub fn random_range(rng: &mut ThreadRng, min: f32, max: f32) -> Self {
+    pub fn random_range(rng: &mut ThreadRng, min: f64, max: f64) -> Self {
         Self {
             e: [
                 rng.gen_range(min..=max),
@@ -41,23 +45,23 @@ impl Vec3 {
         }
     }
 
-    pub fn x(&self) -> f32 {
+    pub fn x(&self) -> f64 {
         self.e[0]
     }
 
-    pub fn y(&self) -> f32 {
+    pub fn y(&self) -> f64 {
         self.e[1]
     }
 
-    pub fn z(&self) -> f32 {
+    pub fn z(&self) -> f64 {
         self.e[2]
     }
 
-    pub fn length(&self) -> f32 {
+    pub fn length(&self) -> f64 {
         self.length_squared().sqrt()
     }
 
-    pub fn length_squared(&self) -> f32 {
+    pub fn length_squared(&self) -> f64 {
         (self.e[0] * self[0]) + (self.e[1] * self[1]) + (self.e[2] * self[2])
     }
 
@@ -73,7 +77,7 @@ impl Vec3 {
     }
 }
 
-pub fn dot(u: &Vec3, v: &Vec3) -> f32 {
+pub fn dot(u: &Vec3, v: &Vec3) -> f64 {
     u.e[0] * v.e[0] + u.e[1] * v.e[1] + u.e[2] * v.e[2]
 }
 
@@ -89,8 +93,8 @@ pub fn reflect(v: &Vec3, n: &Vec3) -> Vec3 {
     v - 2.0 * dot(v,n) * n
 }
 
-pub fn refract(uv: &Vec3, n: &Vec3, eta_i_over_eta_t: f32) -> Vec3 {
-    let cos_theta = 1.0f32.min(dot(&(-*uv), n));
+pub fn refract(uv: &Vec3, n: &Vec3, eta_i_over_eta_t: f64) -> Vec3 {
+    let cos_theta = 1.0f64.min(dot(&(-*uv), n));
     let r_out_perp = eta_i_over_eta_t * (uv + cos_theta * n);
     let r_out_parallel = -(1.0 - r_out_perp.length_squared()).abs().sqrt() * n;
 
@@ -157,7 +161,7 @@ impl ops::Neg for Vec3 {
 }
 
 impl ops::Index<usize> for Vec3 {
-    type Output = f32;
+    type Output = f64;
 
     fn index(&self, index: usize) -> &Self::Output {
         &self.e[index]
@@ -245,7 +249,7 @@ macro_rules! vec3_vec3_opassign {
     };
 }
 
-/// Generates the operations for method assignment. `my_vec += f32`
+/// Generates the operations for method assignment. `my_vec += f64`
 /// `vec3_opassign(ops:AddAssign, add_assign)` (note the camelcase add_assign name)
 macro_rules! vec3_opassign {
     ($($path:ident)::+, $fn:ident, $ty:ty) => {
@@ -259,16 +263,16 @@ macro_rules! vec3_opassign {
     }
 }
 
-/// Generates the operations for the method. `let result = my_vec + 4f32`
+/// Generates the operations for the method. `let result = my_vec + 4f64`
 /// Handles `Vec3, T`, `T, Vec3`, `&Vec3, T`, `T, &Vec3`
-/// `vec3_op!(ops:Add, add, f32)`
+/// `vec3_op!(ops:Add, add, f64)`
 macro_rules! vec3_op {
     ($($path:ident)::+, $fn:ident, $ty:ty) => {
         // impl ops::Add::add for Vec3
         impl $($path)::+<$ty> for Vec3 {
             type Output = Vec3;
 
-            // fn add(self, other: f32) -> Self::Output
+            // fn add(self, other: f64) -> Self::Output
             fn $fn(self, other: $ty) -> Self::Output {
                 Vec3 {
                     // e0: self.e0.add(other)
@@ -338,4 +342,4 @@ vec3_vec3_opassign!(ops::AddAssign, add_assign);
 vec3_vec3_opassign!(ops::SubAssign, sub_assign);
 vec3_vec3_opassign!(ops::MulAssign, mul_assign);
 vec3_vec3_opassign!(ops::DivAssign, div_assign);
-vec3_op_for!(f32);
+vec3_op_for!(f64);

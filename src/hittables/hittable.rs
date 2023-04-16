@@ -1,9 +1,10 @@
-#![allow(dead_code)]
 use std::rc::Rc;
 
 use crate::{
+    aabb::{surrounding_box, AABB},
+    materials::{lambertian::Lambertian, material::Material},
     ray::Ray,
-    vec3::{dot, Point3, Vec3}, material::{Material, Lambertian},
+    vec3::{dot, Point3, Vec3},
 };
 
 #[derive(Clone)]
@@ -11,7 +12,9 @@ pub struct HitRecord {
     pub p: Point3,
     pub normal: Vec3,
     pub mat_ptr: Rc<Box<dyn Material>>,
-    pub t: f32,
+    pub t: f64,
+    pub u: f64,
+    pub v: f64,
     pub front_face: bool,
 }
 
@@ -22,6 +25,8 @@ impl Default for HitRecord {
             normal: Vec3::new(),
             mat_ptr: Rc::new(Box::<Lambertian>::default()),
             t: 0.0,
+            u: 0.0,
+            v: 0.0,
             front_face: false,
         }
     }
@@ -39,7 +44,8 @@ impl HitRecord {
 }
 
 pub trait Hittable {
-    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32, rec: &mut HitRecord) -> bool;
+    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64, rec: &mut HitRecord) -> bool;
+    fn bounding_box(&self, time0: f64, time1: f64, output_box: &mut AABB) -> bool;
 }
 
 pub struct HittableList {
@@ -48,7 +54,9 @@ pub struct HittableList {
 
 impl HittableList {
     pub fn new() -> Self {
-        Self { objects: Vec::new() }
+        Self {
+            objects: Vec::new(),
+        }
     }
 
     pub fn with_value(object: Rc<Box<dyn Hittable>>) -> Self {
@@ -67,7 +75,7 @@ impl HittableList {
 }
 
 impl Hittable for HittableList {
-    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32, rec: &mut HitRecord) -> bool {
+    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64, rec: &mut HitRecord) -> bool {
         let mut temp_rec: HitRecord = rec.clone();
         let mut hit_anything = false;
         let mut closest_so_far = t_max;
@@ -81,5 +89,29 @@ impl Hittable for HittableList {
         }
 
         hit_anything
+    }
+
+    fn bounding_box(&self, time0: f64, time1: f64, output_box: &mut AABB) -> bool {
+        if self.objects.is_empty() {
+            return false;
+        }
+
+        let mut temp_box = AABB::default();
+        let mut first_box = true;
+
+        for object in self.objects.iter() {
+            if !object.bounding_box(time0, time1, &mut temp_box) {
+                return false;
+            }
+
+            *output_box = if first_box {
+                temp_box
+            } else {
+                surrounding_box(output_box, &temp_box)
+            };
+            first_box = false;
+        }
+
+        true
     }
 }
