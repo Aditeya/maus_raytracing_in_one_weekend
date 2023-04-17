@@ -22,26 +22,24 @@ use ray::Ray;
 use scene::{Scene, Settings};
 use vec3::{Color, Vec3};
 
-// pub const ASPECT_RATIO: f64 = 16.0 / 9.0; // 3/2
-// pub const ASPECT_RATIO: f64 = 1.0; // 3/2
-// const IMAGE_WIDTH: u64 = 600; // 1200
-// const IMAGE_HEIGHT: u64 = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as u64;
-// const SAMPLES_PER_PIXEL: u64 = 200; // 500
-// const MAX_DEPTH: u64 = 50;
-
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
+    // Scene to render
+    #[arg(short, long, value_name = "NUM", default_value_t = 0)]
+    scene_number: usize,
+
     // Name of the file to output
     #[arg(short, long, value_name = "FILE")]
     filename: String,
 }
 
 fn main() {
-    let mut rng = rand::thread_rng();
-    let (world, camera, background, settings) = Scene::world_select(&mut rng, 0);
-
     let args = Args::parse();
+
+    let mut rng = rand::thread_rng();
+    let (world, camera, background, settings) = Scene::world_select(&mut rng, args.scene_number);
+
 
     let filename = format!("{}.ppm", args.filename);
     let file = File::create(filename).expect("Unable to create file");
@@ -68,7 +66,7 @@ fn main() {
                 let u = (i as f64 + rng.gen::<f64>()) / (settings.image_width - 1) as f64;
                 let v = (j as f64 + rng.gen::<f64>()) / (settings.image_height - 1) as f64;
                 let ray = camera.get_ray(&mut rng, u, v);
-                pixel_color += ray_color(&mut rng, &ray, &background, &world, settings.max_depth);
+                pixel_color += ray_color(&mut rng, ray, &background, &world, settings.max_depth);
             }
             write_color(&mut file, pixel_color, settings.samples_per_pixel);
         }
@@ -109,7 +107,7 @@ fn write_color(file: &mut BufWriter<File>, pixel_color: Color, samples_per_pixel
     write_to_file(file, point.as_bytes());
 }
 
-fn ray_color(
+fn ray_color_recursive(
     rng: &mut ThreadRng,
     ray: &Ray,
     background: &Color,
@@ -137,5 +135,48 @@ fn ray_color(
         return emitted;
     }
 
-    emitted + attenutation * ray_color(rng, &scattered, background, world, depth - 1)
+    emitted + attenutation * ray_color_recursive(rng, &scattered, background, world, depth - 1)
+}
+
+fn ray_color(
+    rng: &mut ThreadRng,
+    mut ray: Ray,
+    background: &Color,
+    world: &HittableList,
+    depth: u64,
+) -> Color {
+    let mut emitted_attenuation: Vec<(Color, Color)> = Vec::with_capacity(depth as usize);
+
+    let mut final_ray_color: Color = Color::with_value(0.0);
+    for _ in (0..depth).rev() {
+        let mut rec = HitRecord::default();
+
+        if !world.hit(&ray, 0.001, f64::INFINITY, &mut rec) {
+            final_ray_color = *background;
+            break;
+        }
+
+        let mut scattered: Ray = Ray::new(Vec3::new(), Vec3::new(), 0.0);
+        let mut attenutation: Color = Color::new();
+        let emitted: Color = rec.mat_ptr.emitted(rec.u, rec.v, &rec.p);
+
+        if !rec
+            .mat_ptr
+            .scatter(rng, &ray, &rec, &mut attenutation, &mut scattered)
+        {
+            final_ray_color = emitted;
+            break;
+        }
+
+        emitted_attenuation.push((emitted, attenutation));
+        ray = scattered;
+    }
+
+    emitted_attenuation
+        .iter()
+        .rev()
+        .fold(final_ray_color, |mut acc, &(emitted, attenutation)| {
+            acc = emitted + attenutation * acc;
+            acc
+        })
 }

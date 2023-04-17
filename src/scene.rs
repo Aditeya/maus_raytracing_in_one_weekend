@@ -31,10 +31,10 @@ use crate::{
 };
 
 pub struct Settings {
-    pub aspect_ratio: f64, // 3/2
-    pub image_width: u64,  // 1200
+    pub aspect_ratio: f64,
+    pub image_width: u64,
     pub image_height: u64,
-    pub samples_per_pixel: u64, // 500
+    pub samples_per_pixel: u64,
     pub max_depth: u64,
 }
 

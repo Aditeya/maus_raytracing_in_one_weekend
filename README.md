@@ -4,12 +4,13 @@ I made this project in rust following the [Ray Tracing in One Weekend](https://r
 
 ## Usage
 ```
-Usage: maus_raytracing_in_one_weekend --filename <FILE>
+Usage: maus_raytracing_in_one_weekend [OPTIONS] --filename <FILE>
 
 Options:
+  -s, --scene-number <NUM>  [default: 0]
   -f, --filename <FILE>
-  -h, --help             Print help
-  -V, --version          Print version
+  -h, --help                Print help
+  -V, --version             Print version
 ```
 
 ## Running
