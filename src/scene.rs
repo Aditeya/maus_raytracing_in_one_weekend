@@ -1,6 +1,5 @@
+use rand::Rng;
 use std::rc::Rc;
-
-use rand::{rngs::ThreadRng, Rng};
 
 use crate::{
     camera::Camera,
@@ -19,15 +18,15 @@ use crate::{
         dielectric::Dielectric, diffuse_light::DiffuseLight, lambertian::Lambertian,
         material::Material, metal::Metal,
     },
-    rc_box_checker_texture, rc_box_constant_medium, rc_box_cuboid, rc_box_dielectric,
-    rc_box_diffuse_light, rc_box_image_texture, rc_box_lambertian, rc_box_metal,
+    rc_box_bvh_node, rc_box_checker_texture, rc_box_constant_medium, rc_box_cuboid,
+    rc_box_dielectric, rc_box_diffuse_light, rc_box_image_texture, rc_box_lambertian, rc_box_metal,
     rc_box_moving_sphere, rc_box_noise_texture, rc_box_rotate_y, rc_box_sphere, rc_box_translate,
     rc_box_xy_rect, rc_box_xz_rect, rc_box_yz_rect,
     textures::{
         check_texture::CheckerTexture, image_texture::ImageTexture, perlin::NoiseTexture,
         texture::Texture,
     },
-    vec3::{Color, Point3, Vec3}, rc_box_bvh_node,
+    vec3::{Color, Point3, Vec3},
 };
 
 pub struct Settings {
@@ -59,9 +58,7 @@ impl Settings {
 
 pub struct Scene;
 impl Scene {
-    pub fn world_select(
-        world_i: usize,
-    ) -> (HittableList, Camera, Color, Settings) {
+    pub fn world_select(world_i: usize) -> (HittableList, Camera, Color, Settings) {
         let (lookfrom, lookat, background);
         let (mut vfov, mut aperture) = (40.0, 0.0);
         let mut settings = Settings::new();
@@ -208,7 +205,14 @@ impl Scene {
         let center1 = Point3::with_values(400.0, 400.0, 200.0);
         let center2 = center1 + Point3::with_values(30.0, 0.0, 0.0);
         let moving_sphere_material: Rc<Box<dyn Material>> = rc_box_lambertian!(0.7, 0.3, 0.1);
-        objects.add(rc_box_moving_sphere!(center1, center2, 0.0, 1.0, 50.0, &moving_sphere_material));
+        objects.add(rc_box_moving_sphere!(
+            center1,
+            center2,
+            0.0,
+            1.0,
+            50.0,
+            &moving_sphere_material
+        ));
 
         let glass_1p5: Rc<Box<dyn Material>> = rc_box_dielectric!(1.5);
 
@@ -223,37 +227,51 @@ impl Scene {
             &rc_box_metal!(0.8, 0.8, 0.9, 1.0)
         ));
 
-        let boundary: Rc<Box<dyn Hittable>> = rc_box_sphere!(
-            Point3::with_values(360.0, 150.0, 145.0),
-            70.0,
-            &glass_1p5
-        );
-        objects.add(rc_box_constant_medium!(&boundary, 0.2, Color::with_values(0.2, 0.4, 0.9), Color));
+        let boundary: Rc<Box<dyn Hittable>> =
+            rc_box_sphere!(Point3::with_values(360.0, 150.0, 145.0), 70.0, &glass_1p5);
+        objects.add(rc_box_constant_medium!(
+            &boundary,
+            0.2,
+            Color::with_values(0.2, 0.4, 0.9),
+            Color
+        ));
         objects.add(boundary);
-        let boundary: Rc<Box<dyn Hittable>> = rc_box_sphere!(
-            Point3::with_value(0.0),
-            5000.0,
-            &glass_1p5
-        );
-        objects.add(rc_box_constant_medium!(&boundary, 0.0001, Color::with_value(1.0), Color));
+        let boundary: Rc<Box<dyn Hittable>> =
+            rc_box_sphere!(Point3::with_value(0.0), 5000.0, &glass_1p5);
+        objects.add(rc_box_constant_medium!(
+            &boundary,
+            0.0001,
+            Color::with_value(1.0),
+            Color
+        ));
 
-        let emat: Rc<Box<dyn Material>> = rc_box_lambertian!(&rc_box_image_texture!("earthmap.jpg"));
-        objects.add(rc_box_sphere!(Point3::with_values(400.0, 200.0, 400.0), 100.0, &emat));
+        let emat: Rc<Box<dyn Material>> =
+            rc_box_lambertian!(&rc_box_image_texture!("earthmap.jpg"));
+        objects.add(rc_box_sphere!(
+            Point3::with_values(400.0, 200.0, 400.0),
+            100.0,
+            &emat
+        ));
         let pertext: Rc<Box<dyn Texture>> = rc_box_noise_texture!(0.1);
-        objects.add(rc_box_sphere!(Point3::with_values(220.0, 280.0, 300.0), 80.0, &rc_box_lambertian!(&pertext)));
+        objects.add(rc_box_sphere!(
+            Point3::with_values(220.0, 280.0, 300.0),
+            80.0,
+            &rc_box_lambertian!(&pertext)
+        ));
 
         let mut boxes2 = HittableList::new();
         let white: Rc<Box<dyn Material>> = rc_box_lambertian!(0.73);
         let ns = 1000;
         for j in 0..ns {
-            boxes2.add(rc_box_sphere!(Point3::random_range(0.0, 165.0), 10.0, &white));
+            boxes2.add(rc_box_sphere!(
+                Point3::random_range(0.0, 165.0),
+                10.0,
+                &white
+            ));
         }
 
         objects.add(rc_box_translate!(
-            &rc_box_rotate_y!(
-                &rc_box_bvh_node!(&mut boxes2, 0.0, 1.0),
-                15.0
-            ),
+            &rc_box_rotate_y!(&rc_box_bvh_node!(&mut boxes2, 0.0, 1.0), 15.0),
             Vec3::with_values(-100.0, 270.0, 395.0)
         ));
 

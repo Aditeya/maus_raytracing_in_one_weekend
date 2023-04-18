@@ -2,7 +2,7 @@
 
 use std::fmt;
 use std::ops;
-use rand::prelude::*;
+use rand::Rng;
 
 pub type Point3 = Vec3;
 pub type Color = Vec3;

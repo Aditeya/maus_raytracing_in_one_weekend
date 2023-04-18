@@ -1,7 +1,5 @@
 use std::rc::Rc;
 
-use rand::rngs::ThreadRng;
-
 use super::material::Material;
 use crate::{
     hittables::hittable::HitRecord,
@@ -47,23 +45,17 @@ impl Material for DiffuseLight {
 #[macro_export]
 macro_rules! rc_box_diffuse_light {
     ( $rgb:literal ) => {
-        Rc::new(Box::new(DiffuseLight::with_color(
-            Color::with_value($rgb)
-        )))
+        Rc::new(Box::new(DiffuseLight::with_color(Color::with_value($rgb))))
     };
     ( $red:literal, $green:literal, $blue:literal ) => {
-        Rc::new(Box::new(DiffuseLight::with_color(
-            Color::with_values($red, $green, $blue)
-        )))
+        Rc::new(Box::new(DiffuseLight::with_color(Color::with_values(
+            $red, $green, $blue,
+        ))))
     };
     ( Color, $color:expr ) => {
-        Rc::new(Box::new(DiffuseLight::with_color(
-            $color
-        )))
+        Rc::new(Box::new(DiffuseLight::with_color($color)))
     };
     ( $material:expr ) => {
-        Rc::new(Box::new(DiffuseLight::new(
-            $material
-        )))
+        Rc::new(Box::new(DiffuseLight::new($material)))
     };
 }

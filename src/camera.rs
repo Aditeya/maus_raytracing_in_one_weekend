@@ -1,8 +1,8 @@
-use rand::prelude::*;
 use crate::{
     ray::Ray,
-    vec3::{cross, Point3, Vec3, random_in_unit_disk},
+    vec3::{cross, random_in_unit_disk, Point3, Vec3},
 };
+use rand::Rng;
 
 pub struct Camera {
     origin: Point3,
@@ -18,7 +18,17 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub fn new(lookfrom: Point3, lookat: Point3, vup: Vec3, vfov: f64, aspect_ratio: f64, aperture: f64, focus_dist: f64, time0: f64, time1: f64) -> Self {
+    pub fn new(
+        lookfrom: Point3,
+        lookat: Point3,
+        vup: Vec3,
+        vfov: f64,
+        aspect_ratio: f64,
+        aperture: f64,
+        focus_dist: f64,
+        time0: f64,
+        time1: f64,
+    ) -> Self {
         let theta = vfov.to_radians();
         let h = (theta / 2.0).tan();
         let viewport_height = 2.0 * h;

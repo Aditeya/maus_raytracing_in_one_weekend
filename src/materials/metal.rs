@@ -1,5 +1,3 @@
-use rand::rngs::ThreadRng;
-
 use crate::{
     hittables::hittable::HitRecord,
     ray::Ray,

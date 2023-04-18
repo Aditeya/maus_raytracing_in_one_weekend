@@ -1,10 +1,9 @@
-use rand::{rngs::ThreadRng, Rng};
+use rand::Rng;
 
 use crate::{
     hittables::hittable::HitRecord,
     ray::Ray,
-    textures::texture::{SolidColor, Texture},
-    vec3::{dot, random_in_unit_sphere, random_unit_vector, reflect, refract, Color, Point3},
+    vec3::{dot, reflect, refract, Color},
 };
 
 use super::material::Material;

@@ -1,6 +1,3 @@
-#![allow(dead_code)]
-use std::rc::Rc;
-
 use crate::vec3::{Color, Point3};
 
 pub trait Texture {

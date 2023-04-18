@@ -1,7 +1,6 @@
 use std::cmp::Ordering;
 use std::rc::Rc;
 
-use rand::rngs::ThreadRng;
 use rand::Rng;
 
 use super::hittable::{HitRecord, Hittable, HittableList};

@@ -19,7 +19,7 @@ use rand::prelude::*;
 
 use hittables::hittable::{HitRecord, Hittable, HittableList};
 use ray::Ray;
-use scene::{Scene, Settings};
+use scene::Scene;
 use vec3::{Color, Vec3};
 
 #[derive(Parser, Debug)]
@@ -146,7 +146,6 @@ fn ray_color(
     let mut emitted_attenuation: Vec<(Color, Color)> = Vec::with_capacity(depth as usize);
 
     let mut final_ray_color: Color = Color::with_value(0.0);
-    let mut rng = rand::thread_rng();
     for _ in (0..depth).rev() {
         let mut rec = HitRecord::default();
 

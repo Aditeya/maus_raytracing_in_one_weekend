@@ -1,4 +1,4 @@
-use rand::{rngs::ThreadRng, Rng};
+use rand::Rng;
 
 use super::texture::Texture;
 use crate::vec3::{dot, Color, Point3, Vec3};
