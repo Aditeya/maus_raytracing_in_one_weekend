@@ -37,8 +37,7 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    let mut rng = rand::thread_rng();
-    let (world, camera, background, settings) = Scene::world_select(&mut rng, args.scene_number);
+    let (world, camera, background, settings) = Scene::world_select(args.scene_number);
 
 
     let filename = format!("{}.ppm", args.filename);
@@ -58,6 +57,7 @@ fn main() {
     progress_bar.set_message("WORK");
 
 
+    let mut rng = rand::thread_rng();
     for j in (0..settings.image_height).rev() {
         progress_bar.inc(1);
         for i in 0..settings.image_width {
@@ -65,8 +65,8 @@ fn main() {
             for _ in 0..settings.samples_per_pixel {
                 let u = (i as f64 + rng.gen::<f64>()) / (settings.image_width - 1) as f64;
                 let v = (j as f64 + rng.gen::<f64>()) / (settings.image_height - 1) as f64;
-                let ray = camera.get_ray(&mut rng, u, v);
-                pixel_color += ray_color(&mut rng, ray, &background, &world, settings.max_depth);
+                let ray = camera.get_ray(u, v);
+                pixel_color += ray_color(ray, &background, &world, settings.max_depth);
             }
             write_color(&mut file, pixel_color, settings.samples_per_pixel);
         }
@@ -108,7 +108,6 @@ fn write_color(file: &mut BufWriter<File>, pixel_color: Color, samples_per_pixel
 }
 
 fn ray_color_recursive(
-    rng: &mut ThreadRng,
     ray: &Ray,
     background: &Color,
     world: &HittableList,
@@ -130,16 +129,15 @@ fn ray_color_recursive(
 
     if !rec
         .mat_ptr
-        .scatter(rng, ray, &rec, &mut attenutation, &mut scattered)
+        .scatter(ray, &rec, &mut attenutation, &mut scattered)
     {
         return emitted;
     }
 
-    emitted + attenutation * ray_color_recursive(rng, &scattered, background, world, depth - 1)
+    emitted + attenutation * ray_color_recursive(&scattered, background, world, depth - 1)
 }
 
 fn ray_color(
-    rng: &mut ThreadRng,
     mut ray: Ray,
     background: &Color,
     world: &HittableList,
@@ -148,6 +146,7 @@ fn ray_color(
     let mut emitted_attenuation: Vec<(Color, Color)> = Vec::with_capacity(depth as usize);
 
     let mut final_ray_color: Color = Color::with_value(0.0);
+    let mut rng = rand::thread_rng();
     for _ in (0..depth).rev() {
         let mut rec = HitRecord::default();
 
@@ -162,7 +161,7 @@ fn ray_color(
 
         if !rec
             .mat_ptr
-            .scatter(rng, &ray, &rec, &mut attenutation, &mut scattered)
+            .scatter(&ray, &rec, &mut attenutation, &mut scattered)
         {
             final_ray_color = emitted;
             break;

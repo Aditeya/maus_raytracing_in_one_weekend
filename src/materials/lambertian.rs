@@ -40,13 +40,12 @@ impl Default for Lambertian {
 impl Material for Lambertian {
     fn scatter(
         &self,
-        rng: &mut ThreadRng,
         r_in: &Ray,
         rec: &HitRecord,
         attenuation: &mut Color,
         scattered: &mut Ray,
     ) -> bool {
-        let mut scatter_direction = rec.normal + random_unit_vector(rng);
+        let mut scatter_direction = rec.normal + random_unit_vector();
 
         if scatter_direction.near_zero() {
             scatter_direction = rec.normal;

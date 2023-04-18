@@ -60,7 +60,6 @@ impl Settings {
 pub struct Scene;
 impl Scene {
     pub fn world_select(
-        rng: &mut ThreadRng,
         world_i: usize,
     ) -> (HittableList, Camera, Color, Settings) {
         let (lookfrom, lookat, background);
@@ -70,10 +69,14 @@ impl Scene {
         let world: HittableList;
         match world_i {
             1 => {
-                world = Self::random_scene(rng);
+                world = Self::random_scene();
                 background = Color::with_values(0.70, 0.80, 1.00);
                 lookfrom = Point3::with_values(13.0, 2.0, 3.0);
                 lookat = Point3::with_value(0.0);
+
+                // settings.samples_per_pixel = 50;
+                // settings.set_wdith(200);
+
                 vfov = 20.0;
                 aperture = 0.1;
             }
@@ -85,7 +88,7 @@ impl Scene {
                 vfov = 20.0;
             }
             3 => {
-                world = Self::two_perlin_spheres(rng);
+                world = Self::two_perlin_spheres();
                 background = Color::with_values(0.70, 0.80, 1.00);
                 lookfrom = Point3::with_values(13.0, 2.0, 3.0);
                 lookat = Point3::with_value(0.0);
@@ -105,7 +108,7 @@ impl Scene {
                 lookat = Point3::with_value(0.0);
             }
             6 => {
-                world = Self::simple_light(rng);
+                world = Self::simple_light();
                 settings.samples_per_pixel = 400;
                 background = Color::with_value(0.0);
                 lookfrom = Point3::with_values(26.0, 3.0, 6.0);
@@ -133,7 +136,7 @@ impl Scene {
                 vfov = 40.0;
             }
             _ => {
-                world = Self::final_scene(rng);
+                world = Self::final_scene();
                 settings.aspect_ratio = 1.0;
                 settings.set_wdith(800);
                 settings.samples_per_pixel = 10000;
@@ -170,7 +173,8 @@ impl Scene {
         )
     }
 
-    pub fn final_scene(rng: &mut ThreadRng) -> HittableList {
+    pub fn final_scene() -> HittableList {
+        let mut rng = rand::thread_rng();
         let mut boxes1 = HittableList::new();
         let ground: Rc<Box<dyn Material>> = rc_box_lambertian!(0.48, 0.83, 0.53);
 
@@ -235,14 +239,14 @@ impl Scene {
 
         let emat: Rc<Box<dyn Material>> = rc_box_lambertian!(&rc_box_image_texture!("earthmap.jpg"));
         objects.add(rc_box_sphere!(Point3::with_values(400.0, 200.0, 400.0), 100.0, &emat));
-        let pertext: Rc<Box<dyn Texture>> = rc_box_noise_texture!(rng, 0.1);
+        let pertext: Rc<Box<dyn Texture>> = rc_box_noise_texture!(0.1);
         objects.add(rc_box_sphere!(Point3::with_values(220.0, 280.0, 300.0), 80.0, &rc_box_lambertian!(&pertext)));
 
         let mut boxes2 = HittableList::new();
         let white: Rc<Box<dyn Material>> = rc_box_lambertian!(0.73);
         let ns = 1000;
         for j in 0..ns {
-            boxes2.add(rc_box_sphere!(Point3::random_range(rng, 0.0, 165.0), 10.0, &white));
+            boxes2.add(rc_box_sphere!(Point3::random_range(0.0, 165.0), 10.0, &white));
         }
 
         objects.add(rc_box_translate!(
@@ -333,10 +337,10 @@ impl Scene {
         objects
     }
 
-    pub fn simple_light(rng: &mut ThreadRng) -> HittableList {
+    pub fn simple_light() -> HittableList {
         let mut objects = HittableList::new();
 
-        let perlin_texture: Rc<Box<dyn Texture>> = rc_box_noise_texture!(rng, 4.0);
+        let perlin_texture: Rc<Box<dyn Texture>> = rc_box_noise_texture!(4.0);
         let perlin: Rc<Box<dyn Material>> = rc_box_lambertian!(&perlin_texture);
 
         let sphere1: Rc<Box<dyn Hittable>> =
@@ -365,10 +369,10 @@ impl Scene {
         objects
     }
 
-    pub fn two_perlin_spheres(rng: &mut ThreadRng) -> HittableList {
+    pub fn two_perlin_spheres() -> HittableList {
         let mut objects = HittableList::new();
 
-        let perlin_texture: Rc<Box<dyn Texture>> = rc_box_noise_texture!(rng, 4.0);
+        let perlin_texture: Rc<Box<dyn Texture>> = rc_box_noise_texture!(4.0);
         let perlin: Rc<Box<dyn Material>> = rc_box_lambertian!(&perlin_texture);
 
         let sphere1: Rc<Box<dyn Hittable>> =
@@ -399,7 +403,8 @@ impl Scene {
         objects
     }
 
-    pub fn random_scene(rng: &mut ThreadRng) -> HittableList {
+    pub fn random_scene() -> HittableList {
+        let mut rng = rand::thread_rng();
         let mut world = HittableList::new();
 
         let odd = Color::with_values(0.2, 0.3, 0.1);
@@ -426,7 +431,7 @@ impl Scene {
 
                     if choose_mat < 0.8 {
                         // NOTE: diffuse
-                        let albedo = Color::random(rng) * Color::random(rng);
+                        let albedo = Color::random() * Color::random();
                         sphere_material = rc_box_lambertian!(Color, albedo);
 
                         let center2 =
@@ -442,7 +447,7 @@ impl Scene {
                         continue;
                     } else if choose_mat < 0.95 {
                         // NOTE: metal
-                        let albedo = Color::random_range(rng, 0.5, 1.0);
+                        let albedo = Color::random_range(0.5, 1.0);
                         let fuzz = rng.gen_range(0.0..=0.5);
                         sphere_material = rc_box_metal!(albedo, fuzz);
                     } else {

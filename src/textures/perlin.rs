@@ -13,15 +13,15 @@ pub struct Perlin {
 impl Perlin {
     const POINT_COUNT: u64 = 256;
 
-    pub fn new(rng: &mut ThreadRng) -> Self {
+    pub fn new() -> Self {
         let mut ranfloat = Vec::with_capacity(Self::POINT_COUNT as usize);
         for _ in 0..Self::POINT_COUNT {
-            ranfloat.push(Vec3::random_range(rng, -1.0, 1.0));
+            ranfloat.push(Vec3::random_range(-1.0, 1.0));
         }
 
-        let perm_x = Self::perlin_generate_perm(rng);
-        let perm_y = Self::perlin_generate_perm(rng);
-        let perm_z = Self::perlin_generate_perm(rng);
+        let perm_x = Self::perlin_generate_perm();
+        let perm_y = Self::perlin_generate_perm();
+        let perm_z = Self::perlin_generate_perm();
 
         Self {
             ran_vec: ranfloat,
@@ -95,13 +95,14 @@ impl Perlin {
         accum
     }
 
-    fn perlin_generate_perm(rng: &mut ThreadRng) -> Vec<u64> {
+    fn perlin_generate_perm() -> Vec<u64> {
         let mut p = Vec::from_iter(0..Self::POINT_COUNT);
-        Self::permute(rng, &mut p, Self::POINT_COUNT);
+        Self::permute(&mut p, Self::POINT_COUNT);
         p
     }
 
-    fn permute(rng: &mut ThreadRng, p: &mut [u64], n: u64) {
+    fn permute(p: &mut [u64], n: u64) {
+        let mut rng = rand::thread_rng();
         for i in (0..n).rev() {
             let target = rng.gen_range(0..=i) as usize;
             p.swap(i as usize, target);
@@ -115,9 +116,9 @@ pub struct NoiseTexture {
 }
 
 impl NoiseTexture {
-    pub fn new(rng: &mut ThreadRng, scale: f64) -> Self {
+    pub fn new(scale: f64) -> Self {
         Self {
-            noise: Perlin::new(rng),
+            noise: Perlin::new(),
             scale,
         }
     }
@@ -133,7 +134,7 @@ impl Texture for NoiseTexture {
 
 #[macro_export]
 macro_rules! rc_box_noise_texture {
-    ($rng:expr, $scale:literal) => {
-        Rc::new(Box::new(NoiseTexture::new($rng, $scale)))
+    ($scale:literal) => {
+        Rc::new(Box::new(NoiseTexture::new($scale)))
     };
 }

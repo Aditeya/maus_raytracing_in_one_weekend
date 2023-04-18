@@ -31,7 +31,6 @@ impl DiffuseLight {
 impl Material for DiffuseLight {
     fn scatter(
         &self,
-        rng: &mut ThreadRng,
         r_in: &Ray,
         rec: &HitRecord,
         attenuation: &mut Color,

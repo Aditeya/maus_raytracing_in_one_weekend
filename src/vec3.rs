@@ -25,7 +25,8 @@ impl Vec3 {
         Self { e: [e1, e2, e3] }
     }
 
-    pub fn random(rng: &mut ThreadRng) -> Self {
+    pub fn random() -> Self {
+        let mut rng = rand::thread_rng();
         Self {
             e: [
                 rng.gen::<f64>(),
@@ -35,7 +36,8 @@ impl Vec3 {
         }
     }
 
-    pub fn random_range(rng: &mut ThreadRng, min: f64, max: f64) -> Self {
+    pub fn random_range(min: f64, max: f64) -> Self {
+        let mut rng = rand::thread_rng();
         Self {
             e: [
                 rng.gen_range(min..=max),
@@ -101,7 +103,8 @@ pub fn refract(uv: &Vec3, n: &Vec3, eta_i_over_eta_t: f64) -> Vec3 {
     r_out_perp + r_out_parallel
 }
 
-pub fn random_in_unit_disk(rng: &mut ThreadRng) -> Vec3 {
+pub fn random_in_unit_disk() -> Vec3 {
+    let mut rng = rand::thread_rng();
     loop {
         let p = Vec3::with_values(
             rng.gen_range(-1.0..=1.0),
@@ -115,21 +118,21 @@ pub fn random_in_unit_disk(rng: &mut ThreadRng) -> Vec3 {
     }
 }
 
-pub fn random_in_unit_sphere(rng: &mut ThreadRng) -> Vec3 {
+pub fn random_in_unit_sphere() -> Vec3 {
     loop {
-        let p = Vec3::random_range(rng, -1.0, 1.0);
+        let p = Vec3::random_range(-1.0, 1.0);
         if p.length_squared() < 1.0 {
             return p;
         }
     }
 }
 
-pub fn random_unit_vector(rng: &mut ThreadRng) -> Vec3 {
-    random_in_unit_sphere(rng).unit_vector()
+pub fn random_unit_vector() -> Vec3 {
+    random_in_unit_sphere().unit_vector()
 }
 
-pub fn random_in_hemisphere(rng: &mut ThreadRng, normal: &Vec3) -> Vec3 {
-    let in_unit_sphere = random_in_unit_sphere(rng);
+pub fn random_in_hemisphere(normal: &Vec3) -> Vec3 {
+    let in_unit_sphere = random_in_unit_sphere();
     if dot(&in_unit_sphere, normal) > 0.0 {
         in_unit_sphere
     } else {

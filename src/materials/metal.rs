@@ -26,7 +26,6 @@ impl Metal {
 impl Material for Metal {
     fn scatter(
         &self,
-        rng: &mut ThreadRng,
         r_in: &Ray,
         rec: &HitRecord,
         attenuation: &mut Color,
@@ -35,7 +34,7 @@ impl Material for Metal {
         let reflected = reflect(&r_in.direction().unit_vector(), &rec.normal);
         *scattered = Ray::new(
             rec.p,
-            reflected + self.fuzz * random_in_unit_sphere(rng),
+            reflected + self.fuzz * random_in_unit_sphere(),
             r_in.time(),
         );
         *attenuation = self.albedo;

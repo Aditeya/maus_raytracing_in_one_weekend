@@ -27,13 +27,12 @@ impl Isotropic {
 impl Material for Isotropic {
     fn scatter(
             &self,
-            rng: &mut ThreadRng,
             r_in: &Ray,
             rec: &HitRecord,
             attenuation: &mut Color,
             scattered: &mut Ray,
         ) -> bool {
-        *scattered = Ray::new(rec.p, random_in_unit_sphere(rng), r_in.time());
+        *scattered = Ray::new(rec.p, random_in_unit_sphere(), r_in.time());
         *attenuation = self.albedo.value(rec.u, rec.v, &rec.p);
         true
     }

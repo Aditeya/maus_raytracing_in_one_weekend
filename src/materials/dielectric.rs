@@ -31,7 +31,6 @@ impl Dielectric {
 impl Material for Dielectric {
     fn scatter(
         &self,
-        rng: &mut ThreadRng,
         r_in: &Ray,
         rec: &HitRecord,
         attenuation: &mut Color,
@@ -49,6 +48,7 @@ impl Material for Dielectric {
         let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
 
         let cannot_refract = refraction_ratio * sin_theta > 1.0;
+        let mut rng = rand::thread_rng();
         let direction = if cannot_refract
             || Dielectric::reflectance(&cos_theta, &refraction_ratio) > rng.gen::<f64>()
         {

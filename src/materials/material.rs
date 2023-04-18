@@ -11,7 +11,6 @@ use crate::{
 pub trait Material {
     fn scatter(
         &self,
-        rng: &mut ThreadRng,
         r_in: &Ray,
         rec: &HitRecord,
         attenuation: &mut Color,
