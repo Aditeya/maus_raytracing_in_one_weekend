@@ -142,51 +142,6 @@ fn write_to_file(file: &mut BufWriter<File>, data_as_bytes: &[u8]) {
     }
 }
 
-fn write_color(file: &mut BufWriter<File>, pixel_color: Color, samples_per_pixel: u64) {
-    let mut r = pixel_color.x();
-    let mut g = pixel_color.y();
-    let mut b = pixel_color.z();
-
-    let scale = 1.0 / samples_per_pixel as f64;
-    r = (scale * r).sqrt();
-    g = (scale * g).sqrt();
-    b = (scale * b).sqrt();
-
-    let point = format!(
-        "{:#03} {:#03} {:#03}\n",
-        (256.0 * r.clamp(0.0, 0.999)) as u64,
-        (256.0 * g.clamp(0.0, 0.999)) as u64,
-        (256.0 * b.clamp(0.0, 0.999)) as u64
-    );
-
-    write_to_file(file, point.as_bytes());
-}
-
-fn ray_color_recursive(ray: &Ray, background: &Color, world: &HittableList, depth: u64) -> Color {
-    if depth == 0 {
-        return Color::with_value(0.0);
-    }
-
-    let mut rec = HitRecord::default();
-
-    if !world.hit(ray, 0.001, f64::INFINITY, &mut rec) {
-        return *background;
-    }
-
-    let mut scattered: Ray = Ray::new(Vec3::new(), Vec3::new(), 0.0);
-    let mut attenutation: Color = Color::new();
-    let emitted: Color = rec.mat_ptr.emitted(rec.u, rec.v, &rec.p);
-
-    if !rec
-        .mat_ptr
-        .scatter(ray, &rec, &mut attenutation, &mut scattered)
-    {
-        return emitted;
-    }
-
-    emitted + attenutation * ray_color_recursive(&scattered, background, world, depth - 1)
-}
-
 fn ray_color(mut ray: Ray, background: &Color, world: &HittableList, depth: u64) -> Color {
     let mut emitted_attenuation: Vec<(Color, Color)> = Vec::with_capacity(depth as usize);
 
