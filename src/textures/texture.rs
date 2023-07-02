@@ -21,7 +21,7 @@ impl SolidColor {
 }
 
 impl Texture for SolidColor {
-    fn value(&self, u: f64, v: f64, p: &Point3) -> Color {
+    fn value(&self, _: f64, _: f64, _: &Point3) -> Color {
         self.color_value
     }
 }

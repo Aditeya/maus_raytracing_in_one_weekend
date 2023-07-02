@@ -54,7 +54,7 @@ impl Hittable for YZRect {
         true
     }
 
-    fn bounding_box(&self, time0: f64, time1: f64, output_box: &mut AABB) -> bool {
+    fn bounding_box(&self, _: f64, _: f64, output_box: &mut AABB) -> bool {
         let min = Point3::with_values(self.k - 0.0001, self.y0, self.z0);
         let max = Point3::with_values(self.k + 0.0001, self.y1, self.z1);
         *output_box = AABB::new(min, max);

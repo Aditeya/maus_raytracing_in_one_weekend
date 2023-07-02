@@ -262,7 +262,7 @@ impl Scene {
         let mut boxes2 = HittableList::new();
         let white: Arc<Box<dyn Material>> = rc_box_lambertian!(0.73);
         let ns = 1000;
-        for j in 0..ns {
+        for _ in 0..ns {
             boxes2.add(rc_box_sphere!(
                 Point3::random_range(0.0, 165.0),
                 10.0,

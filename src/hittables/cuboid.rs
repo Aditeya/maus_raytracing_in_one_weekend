@@ -89,7 +89,7 @@ impl Hittable for Cuboid {
         self.sides.hit(ray, t_min, t_max, rec)
     }
 
-    fn bounding_box(&self, time0: f64, time1: f64, output_box: &mut crate::aabb::AABB) -> bool {
+    fn bounding_box(&self, _: f64, _: f64, output_box: &mut crate::aabb::AABB) -> bool {
         *output_box = AABB::new(self.cuboid_min, self.cuboid_max);
         true
     }

@@ -62,7 +62,7 @@ fn main() {
     progress_bar.set_message("WORK");
     let progress_bar = Mutex::new(progress_bar);
 
-    let mut img: Arc<Mutex<Vec<Vec<[u8; 12]>>>> =
+    let img: Arc<Mutex<Vec<Vec<[u8; 12]>>>> =
         Arc::new(Mutex::new(vec![
             vec![
                 [48u8; 12];
