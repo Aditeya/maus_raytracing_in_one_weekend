@@ -1,8 +1,9 @@
 #![allow(dead_code)]
 
-use std::fmt;
-use std::ops;
 use rand::Rng;
+use std::fmt;
+use std::iter::Sum;
+use std::ops;
 
 pub type Point3 = Vec3;
 pub type Color = Vec3;
@@ -20,7 +21,7 @@ impl Vec3 {
     pub fn with_value(e: f64) -> Self {
         Self { e: [e, e, e] }
     }
-    
+
     pub fn with_values(e1: f64, e2: f64, e3: f64) -> Self {
         Self { e: [e1, e2, e3] }
     }
@@ -28,11 +29,7 @@ impl Vec3 {
     pub fn random() -> Self {
         let mut rng = rand::thread_rng();
         Self {
-            e: [
-                rng.gen::<f64>(),
-                rng.gen::<f64>(),
-                rng.gen::<f64>(),
-            ]
+            e: [rng.gen::<f64>(), rng.gen::<f64>(), rng.gen::<f64>()],
         }
     }
 
@@ -43,7 +40,7 @@ impl Vec3 {
                 rng.gen_range(min..=max),
                 rng.gen_range(min..=max),
                 rng.gen_range(min..=max),
-            ]
+            ],
         }
     }
 
@@ -73,9 +70,7 @@ impl Vec3 {
 
     pub fn near_zero(&self) -> bool {
         let s = 1e-8;
-        (self.e[0].abs() < s) &&
-        (self.e[1].abs() < s) &&
-        (self.e[2].abs() < s)
+        (self.e[0].abs() < s) && (self.e[1].abs() < s) && (self.e[2].abs() < s)
     }
 }
 
@@ -92,7 +87,7 @@ pub fn cross(u: &Vec3, v: &Vec3) -> Vec3 {
 }
 
 pub fn reflect(v: &Vec3, n: &Vec3) -> Vec3 {
-    v - 2.0 * dot(v,n) * n
+    v - 2.0 * dot(v, n) * n
 }
 
 pub fn refract(uv: &Vec3, n: &Vec3, eta_i_over_eta_t: f64) -> Vec3 {
@@ -106,12 +101,8 @@ pub fn refract(uv: &Vec3, n: &Vec3, eta_i_over_eta_t: f64) -> Vec3 {
 pub fn random_in_unit_disk() -> Vec3 {
     let mut rng = rand::thread_rng();
     loop {
-        let p = Vec3::with_values(
-            rng.gen_range(-1.0..=1.0),
-            rng.gen_range(-1.0..=1.0),
-            0.0
-        );
-        
+        let p = Vec3::with_values(rng.gen_range(-1.0..=1.0), rng.gen_range(-1.0..=1.0), 0.0);
+
         if p.length_squared() < 1.0 {
             return p;
         }
@@ -140,6 +131,17 @@ pub fn random_in_hemisphere(normal: &Vec3) -> Vec3 {
     }
 }
 
+impl Sum for Vec3 {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        let mut sum = Vec3::new();
+
+        for i in iter {
+            sum += i;
+        }
+
+        sum
+    }
+}
 
 impl Default for Vec3 {
     fn default() -> Self {

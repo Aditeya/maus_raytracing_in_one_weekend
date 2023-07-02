@@ -44,13 +44,13 @@ impl Material for Metal {
 #[macro_export]
 macro_rules! rc_box_metal {
     ( $color:expr, $f:expr ) => {
-        Rc::new(Box::new(Metal::new($color, $f)))
+        Arc::new(Box::new(Metal::new($color, $f)))
     };
     ( $rgb:literal, $f:literal ) => {
-        Rc::new(Box::new(Metal::new(Color::with_value($rgb), $f)))
+        Arc::new(Box::new(Metal::new(Color::with_value($rgb), $f)))
     };
     ( $red:literal, $green:literal, $blue:literal, $f:literal ) => {
-        Rc::new(Box::new(Metal::new(
+        Arc::new(Box::new(Metal::new(
             Color::with_values($red, $green, $blue),
             $f,
         )))

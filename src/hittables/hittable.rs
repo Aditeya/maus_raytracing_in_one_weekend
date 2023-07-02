@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
 use crate::{
     aabb::{surrounding_box, AABB},
@@ -11,7 +11,7 @@ use crate::{
 pub struct HitRecord {
     pub p: Point3,
     pub normal: Vec3,
-    pub mat_ptr: Rc<Box<dyn Material>>,
+    pub mat_ptr: Arc<Box<dyn Material>>,
     pub t: f64,
     pub u: f64,
     pub v: f64,
@@ -23,7 +23,7 @@ impl Default for HitRecord {
         Self {
             p: Point3::new(),
             normal: Vec3::new(),
-            mat_ptr: Rc::new(Box::<Lambertian>::default()),
+            mat_ptr: Arc::new(Box::<Lambertian>::default()),
             t: 0.0,
             u: 0.0,
             v: 0.0,
@@ -49,9 +49,11 @@ pub trait Hittable {
 }
 
 pub struct HittableList {
-    pub objects: Vec<Rc<Box<dyn Hittable>>>,
+    pub objects: Vec<Arc<Box<dyn Hittable>>>,
 }
 
+unsafe impl Sync for HittableList {}
+unsafe impl Send for HittableList {}
 impl HittableList {
     pub fn new() -> Self {
         Self {
@@ -59,7 +61,7 @@ impl HittableList {
         }
     }
 
-    pub fn with_value(object: Rc<Box<dyn Hittable>>) -> Self {
+    pub fn with_value(object: Arc<Box<dyn Hittable>>) -> Self {
         Self {
             objects: vec![object],
         }
@@ -69,7 +71,7 @@ impl HittableList {
         self.objects.clear();
     }
 
-    pub fn add(&mut self, object: Rc<Box<dyn Hittable>>) {
+    pub fn add(&mut self, object: Arc<Box<dyn Hittable>>) {
         self.objects.push(object);
     }
 }

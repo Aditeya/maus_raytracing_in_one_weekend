@@ -1,18 +1,18 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
 use crate::{aabb::AABB, ray::Ray, vec3::Vec3};
 
 use super::hittable::{HitRecord, Hittable};
 
 pub struct Translate {
-    ptr: Rc<Box<dyn Hittable>>,
+    ptr: Arc<Box<dyn Hittable>>,
     offset: Vec3,
 }
 
 impl Translate {
-    pub fn new(p: &Rc<Box<dyn Hittable>>, displacement: Vec3) -> Self {
+    pub fn new(p: &Arc<Box<dyn Hittable>>, displacement: Vec3) -> Self {
         Self {
-            ptr: Rc::clone(p),
+            ptr: Arc::clone(p),
             offset: displacement,
         }
     }
@@ -48,6 +48,6 @@ impl Hittable for Translate {
 #[macro_export]
 macro_rules! rc_box_translate {
     ( $ptr:expr, $displacement:expr ) => {
-        Rc::new(Box::new(Translate::new($ptr, $displacement)))
+        Arc::new(Box::new(Translate::new($ptr, $displacement)))
     };
 }

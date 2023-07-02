@@ -12,10 +12,12 @@ mod ray;
 
 use std::fs::File;
 use std::io::{BufWriter, Write};
+use std::sync::{Arc, Mutex};
 
 use clap::Parser;
 use indicatif::{ProgressBar, ProgressStyle};
 use rand::prelude::*;
+use rayon::prelude::*;
 
 use hittables::hittable::{HitRecord, Hittable, HittableList};
 use ray::Ray;
@@ -30,7 +32,7 @@ struct Args {
     scene_number: usize,
 
     // Name of the file to output
-    #[arg(short, long, value_name = "FILE")]
+    #[arg(short, long, value_name = "FILE", default_value_t = String::from("image"))]
     filename: String,
 }
 
@@ -38,13 +40,16 @@ fn main() {
     let args = Args::parse();
 
     let (world, camera, background, settings) = Scene::world_select(args.scene_number);
-
+    let world = Arc::new(world);
 
     let filename = format!("{}.ppm", args.filename);
     let file = File::create(filename).expect("Unable to create file");
     let mut file = BufWriter::new(file);
 
-    let ppm_header = format!("P3\n{} {}\n255\n", settings.image_width, settings.image_height);
+    let ppm_header = format!(
+        "P3\n{} {}\n255\n",
+        settings.image_width, settings.image_height
+    );
     write_to_file(&mut file, ppm_header.as_bytes());
 
     let progress_bar = ProgressBar::new(settings.image_height);
@@ -55,29 +60,79 @@ fn main() {
         .unwrap(),
     );
     progress_bar.set_message("WORK");
+    let progress_bar = Mutex::new(progress_bar);
 
+    let mut img: Arc<Mutex<Vec<Vec<[u8; 12]>>>> =
+        Arc::new(Mutex::new(vec![
+            vec![
+                [48u8; 12];
+                settings.image_width as usize
+            ];
+            settings.image_height as usize
+        ]));
 
-    let mut rng = rand::thread_rng();
-    for j in (0..settings.image_height).rev() {
-        progress_bar.inc(1);
-        for i in 0..settings.image_width {
-            let mut pixel_color = Color::new();
-            for _ in 0..settings.samples_per_pixel {
-                let u = (i as f64 + rng.gen::<f64>()) / (settings.image_width - 1) as f64;
-                let v = (j as f64 + rng.gen::<f64>()) / (settings.image_height - 1) as f64;
-                let ray = camera.get_ray(u, v);
-                pixel_color += ray_color(ray, &background, &world, settings.max_depth);
-            }
-            write_color(&mut file, pixel_color, settings.samples_per_pixel);
-        }
-    }
+    (0..settings.image_height).into_par_iter().for_each(|j| {
+        progress_bar.lock().unwrap().inc(1);
+        let buf_j = (settings.image_height - 1 - j) as usize;
 
-    if file.flush().is_err() {
-        eprintln!("Write Failed");
+        (0..settings.image_width).into_par_iter().for_each(|i| {
+            let pixel_color = (0..settings.samples_per_pixel)
+                .into_par_iter()
+                .map(|_| {
+                    let mut rng = rand::thread_rng();
+                    let u = (i as f64 + rng.gen::<f64>()) / (settings.image_width - 1) as f64;
+                    let v = (j as f64 + rng.gen::<f64>()) / (settings.image_height - 1) as f64;
+                    let ray = camera.get_ray(u, v);
+                    ray_color(ray, &background, &world, settings.max_depth)
+                })
+                .sum();
+
+            let mut img = img.lock().unwrap();
+            write_to_buf(
+                &mut img,
+                buf_j,
+                i as usize,
+                pixel_color,
+                settings.samples_per_pixel,
+            );
+        })
+    });
+
+    let img = img.lock().unwrap().concat().concat();
+    write_to_file(&mut file, &img);
+
+    if let Err(e) = file.flush() {
+        eprintln!("Write Failed because: {}", e);
         std::process::exit(1);
     };
 
-    progress_bar.finish_with_message("DONE");
+    progress_bar.lock().unwrap().finish_with_message("DONE");
+}
+
+fn write_to_buf(
+    buf: &mut [Vec<[u8; 12]>],
+    j: usize,
+    i: usize,
+    pixel_color: Color,
+    samples_per_pixel: u64,
+) {
+    let mut r = pixel_color.x();
+    let mut g = pixel_color.y();
+    let mut b = pixel_color.z();
+
+    let scale = 1.0 / samples_per_pixel as f64;
+    r = (scale * r).sqrt();
+    g = (scale * g).sqrt();
+    b = (scale * b).sqrt();
+
+    let point = format!(
+        "{:#03} {:#03} {:#03}\n",
+        (256.0 * r.clamp(0.0, 0.999)) as u64,
+        (256.0 * g.clamp(0.0, 0.999)) as u64,
+        (256.0 * b.clamp(0.0, 0.999)) as u64
+    );
+
+    buf[j][i].copy_from_slice(point.as_bytes());
 }
 
 fn write_to_file(file: &mut BufWriter<File>, data_as_bytes: &[u8]) {
@@ -98,7 +153,7 @@ fn write_color(file: &mut BufWriter<File>, pixel_color: Color, samples_per_pixel
     b = (scale * b).sqrt();
 
     let point = format!(
-        "{} {} {}\n",
+        "{:#03} {:#03} {:#03}\n",
         (256.0 * r.clamp(0.0, 0.999)) as u64,
         (256.0 * g.clamp(0.0, 0.999)) as u64,
         (256.0 * b.clamp(0.0, 0.999)) as u64
@@ -107,12 +162,7 @@ fn write_color(file: &mut BufWriter<File>, pixel_color: Color, samples_per_pixel
     write_to_file(file, point.as_bytes());
 }
 
-fn ray_color_recursive(
-    ray: &Ray,
-    background: &Color,
-    world: &HittableList,
-    depth: u64,
-) -> Color {
+fn ray_color_recursive(ray: &Ray, background: &Color, world: &HittableList, depth: u64) -> Color {
     if depth == 0 {
         return Color::with_value(0.0);
     }
@@ -137,12 +187,7 @@ fn ray_color_recursive(
     emitted + attenutation * ray_color_recursive(&scattered, background, world, depth - 1)
 }
 
-fn ray_color(
-    mut ray: Ray,
-    background: &Color,
-    world: &HittableList,
-    depth: u64,
-) -> Color {
+fn ray_color(mut ray: Ray, background: &Color, world: &HittableList, depth: u64) -> Color {
     let mut emitted_attenuation: Vec<(Color, Color)> = Vec::with_capacity(depth as usize);
 
     let mut final_ray_color: Color = Color::with_value(0.0);

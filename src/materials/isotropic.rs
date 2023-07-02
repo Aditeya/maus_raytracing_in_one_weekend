@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
 use crate::{
     hittables::hittable::HitRecord,
@@ -10,19 +10,19 @@ use crate::{
 use super::material::Material;
 
 pub struct Isotropic {
-    albedo: Rc<Box<dyn Texture>>,
+    albedo: Arc<Box<dyn Texture>>,
 }
 
 impl Isotropic {
     pub fn new(color: Color) -> Self {
         Self {
-            albedo: Rc::new(Box::new(SolidColor::new(color))),
+            albedo: Arc::new(Box::new(SolidColor::new(color))),
         }
     }
 
-    pub fn with_texture(a: &Rc<Box<dyn Texture>>) -> Self {
+    pub fn with_texture(a: &Arc<Box<dyn Texture>>) -> Self {
         Self {
-            albedo: Rc::clone(a),
+            albedo: Arc::clone(a),
         }
     }
 }

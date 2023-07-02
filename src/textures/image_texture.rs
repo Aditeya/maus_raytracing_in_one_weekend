@@ -53,6 +53,6 @@ impl Texture for ImageTexture {
 #[macro_export]
 macro_rules! rc_box_image_texture {
     ($filepath:expr) => {
-        Rc::new(Box::new(ImageTexture::new($filepath)))
+        Arc::new(Box::new(ImageTexture::new($filepath)))
     };
 }

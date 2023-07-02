@@ -64,6 +64,6 @@ impl Material for Dielectric {
 #[macro_export]
 macro_rules! rc_box_dielectric {
     ( $ior:expr ) => {
-        Rc::new(Box::new(Dielectric::new($ior)))
+        Arc::new(Box::new(Dielectric::new($ior)))
     };
 }

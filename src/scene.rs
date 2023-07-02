@@ -1,5 +1,5 @@
 use rand::Rng;
-use std::rc::Rc;
+use std::sync::Arc;
 
 use crate::{
     camera::Camera,
@@ -71,8 +71,8 @@ impl Scene {
                 lookfrom = Point3::with_values(13.0, 2.0, 3.0);
                 lookat = Point3::with_value(0.0);
 
-                // settings.samples_per_pixel = 50;
-                // settings.set_wdith(200);
+                settings.samples_per_pixel = 50;
+                settings.set_wdith(200);
 
                 vfov = 20.0;
                 aperture = 0.1;
@@ -173,7 +173,7 @@ impl Scene {
     pub fn final_scene() -> HittableList {
         let mut rng = rand::thread_rng();
         let mut boxes1 = HittableList::new();
-        let ground: Rc<Box<dyn Material>> = rc_box_lambertian!(0.48, 0.83, 0.53);
+        let ground: Arc<Box<dyn Material>> = rc_box_lambertian!(0.48, 0.83, 0.53);
 
         let boxes_per_side = 20;
         for i in 0..boxes_per_side {
@@ -199,12 +199,12 @@ impl Scene {
         let mut objects = HittableList::new();
         objects.add(rc_box_bvh_node!(&mut boxes1, 0.0, 1.0));
 
-        let light: Rc<Box<dyn Material>> = rc_box_diffuse_light!(7.0);
+        let light: Arc<Box<dyn Material>> = rc_box_diffuse_light!(7.0);
         objects.add(rc_box_xz_rect!(123.0, 423.0, 147.0, 412.0, 554.0, &light));
 
         let center1 = Point3::with_values(400.0, 400.0, 200.0);
         let center2 = center1 + Point3::with_values(30.0, 0.0, 0.0);
-        let moving_sphere_material: Rc<Box<dyn Material>> = rc_box_lambertian!(0.7, 0.3, 0.1);
+        let moving_sphere_material: Arc<Box<dyn Material>> = rc_box_lambertian!(0.7, 0.3, 0.1);
         objects.add(rc_box_moving_sphere!(
             center1,
             center2,
@@ -214,7 +214,7 @@ impl Scene {
             &moving_sphere_material
         ));
 
-        let glass_1p5: Rc<Box<dyn Material>> = rc_box_dielectric!(1.5);
+        let glass_1p5: Arc<Box<dyn Material>> = rc_box_dielectric!(1.5);
 
         objects.add(rc_box_sphere!(
             Point3::with_values(260.0, 150.0, 45.0),
@@ -227,7 +227,7 @@ impl Scene {
             &rc_box_metal!(0.8, 0.8, 0.9, 1.0)
         ));
 
-        let boundary: Rc<Box<dyn Hittable>> =
+        let boundary: Arc<Box<dyn Hittable>> =
             rc_box_sphere!(Point3::with_values(360.0, 150.0, 145.0), 70.0, &glass_1p5);
         objects.add(rc_box_constant_medium!(
             &boundary,
@@ -236,7 +236,7 @@ impl Scene {
             Color
         ));
         objects.add(boundary);
-        let boundary: Rc<Box<dyn Hittable>> =
+        let boundary: Arc<Box<dyn Hittable>> =
             rc_box_sphere!(Point3::with_value(0.0), 5000.0, &glass_1p5);
         objects.add(rc_box_constant_medium!(
             &boundary,
@@ -245,14 +245,14 @@ impl Scene {
             Color
         ));
 
-        let emat: Rc<Box<dyn Material>> =
+        let emat: Arc<Box<dyn Material>> =
             rc_box_lambertian!(&rc_box_image_texture!("earthmap.jpg"));
         objects.add(rc_box_sphere!(
             Point3::with_values(400.0, 200.0, 400.0),
             100.0,
             &emat
         ));
-        let pertext: Rc<Box<dyn Texture>> = rc_box_noise_texture!(0.1);
+        let pertext: Arc<Box<dyn Texture>> = rc_box_noise_texture!(0.1);
         objects.add(rc_box_sphere!(
             Point3::with_values(220.0, 280.0, 300.0),
             80.0,
@@ -260,7 +260,7 @@ impl Scene {
         ));
 
         let mut boxes2 = HittableList::new();
-        let white: Rc<Box<dyn Material>> = rc_box_lambertian!(0.73);
+        let white: Arc<Box<dyn Material>> = rc_box_lambertian!(0.73);
         let ns = 1000;
         for j in 0..ns {
             boxes2.add(rc_box_sphere!(
@@ -281,10 +281,10 @@ impl Scene {
     pub fn cornell_smoke() -> HittableList {
         let mut objects = HittableList::new();
 
-        let red: Rc<Box<dyn Material>> = rc_box_lambertian!(0.65, 0.05, 0.05);
-        let white: Rc<Box<dyn Material>> = rc_box_lambertian!(0.73);
-        let green: Rc<Box<dyn Material>> = rc_box_lambertian!(0.12, 0.45, 0.15);
-        let light: Rc<Box<dyn Material>> = rc_box_diffuse_light!(7.0);
+        let red: Arc<Box<dyn Material>> = rc_box_lambertian!(0.65, 0.05, 0.05);
+        let white: Arc<Box<dyn Material>> = rc_box_lambertian!(0.73);
+        let green: Arc<Box<dyn Material>> = rc_box_lambertian!(0.12, 0.45, 0.15);
+        let light: Arc<Box<dyn Material>> = rc_box_diffuse_light!(7.0);
 
         objects.add(rc_box_yz_rect!(000.0, 555.0, 000.0, 555.0, 555.0, &green));
         objects.add(rc_box_yz_rect!(000.0, 555.0, 000.0, 555.0, 000.0, &red));
@@ -293,7 +293,7 @@ impl Scene {
         objects.add(rc_box_xz_rect!(000.0, 555.0, 000.0, 555.0, 000.0, &white));
         objects.add(rc_box_xy_rect!(000.0, 555.0, 000.0, 555.0, 555.0, &white));
 
-        let mut box1: Rc<Box<dyn Hittable>> = rc_box_cuboid!(
+        let mut box1: Arc<Box<dyn Hittable>> = rc_box_cuboid!(
             Point3::with_value(0.0),
             Point3::with_values(165.0, 330.0, 165.0),
             &white
@@ -301,7 +301,7 @@ impl Scene {
         box1 = rc_box_rotate_y!(&box1, 15.0);
         box1 = rc_box_translate!(&box1, Vec3::with_values(265.0, 0.0, 295.0));
 
-        let mut box2: Rc<Box<dyn Hittable>> =
+        let mut box2: Arc<Box<dyn Hittable>> =
             rc_box_cuboid!(Point3::with_value(0.0), Point3::with_value(165.0), &white);
         box2 = rc_box_rotate_y!(&box2, -18.0);
         box2 = rc_box_translate!(&box2, Vec3::with_values(130.0, 0.0, 65.0));
@@ -325,10 +325,10 @@ impl Scene {
     pub fn cornell_box() -> HittableList {
         let mut objects = HittableList::new();
 
-        let red: Rc<Box<dyn Material>> = rc_box_lambertian!(0.65, 0.05, 0.05);
-        let white: Rc<Box<dyn Material>> = rc_box_lambertian!(0.73);
-        let green: Rc<Box<dyn Material>> = rc_box_lambertian!(0.12, 0.45, 0.15);
-        let light: Rc<Box<dyn Material>> = rc_box_diffuse_light!(15.0);
+        let red: Arc<Box<dyn Material>> = rc_box_lambertian!(0.65, 0.05, 0.05);
+        let white: Arc<Box<dyn Material>> = rc_box_lambertian!(0.73);
+        let green: Arc<Box<dyn Material>> = rc_box_lambertian!(0.12, 0.45, 0.15);
+        let light: Arc<Box<dyn Material>> = rc_box_diffuse_light!(15.0);
 
         objects.add(rc_box_yz_rect!(000.0, 555.0, 000.0, 555.0, 555.0, &green));
         objects.add(rc_box_yz_rect!(000.0, 555.0, 000.0, 555.0, 000.0, &red));
@@ -337,7 +337,7 @@ impl Scene {
         objects.add(rc_box_xz_rect!(000.0, 555.0, 000.0, 555.0, 555.0, &white));
         objects.add(rc_box_xy_rect!(000.0, 555.0, 000.0, 555.0, 555.0, &white));
 
-        let mut box1: Rc<Box<dyn Hittable>> = rc_box_cuboid!(
+        let mut box1: Arc<Box<dyn Hittable>> = rc_box_cuboid!(
             Point3::with_value(0.0),
             Point3::with_values(165.0, 330.0, 165.0),
             &white
@@ -346,7 +346,7 @@ impl Scene {
         box1 = rc_box_translate!(&box1, Vec3::with_values(265.0, 0.0, 295.0));
         objects.add(box1);
 
-        let mut box2: Rc<Box<dyn Hittable>> =
+        let mut box2: Arc<Box<dyn Hittable>> =
             rc_box_cuboid!(Point3::with_value(0.0), Point3::with_value(165.0), &white);
         box2 = rc_box_rotate_y!(&box2, -18.0);
         box2 = rc_box_translate!(&box2, Vec3::with_values(130.0, 0.0, 65.0));
@@ -358,18 +358,18 @@ impl Scene {
     pub fn simple_light() -> HittableList {
         let mut objects = HittableList::new();
 
-        let perlin_texture: Rc<Box<dyn Texture>> = rc_box_noise_texture!(4.0);
-        let perlin: Rc<Box<dyn Material>> = rc_box_lambertian!(&perlin_texture);
+        let perlin_texture: Arc<Box<dyn Texture>> = rc_box_noise_texture!(4.0);
+        let perlin: Arc<Box<dyn Material>> = rc_box_lambertian!(&perlin_texture);
 
-        let sphere1: Rc<Box<dyn Hittable>> =
+        let sphere1: Arc<Box<dyn Hittable>> =
             rc_box_sphere!(Point3::with_values(0.0, -1000.0, 0.0), 1000.0, &perlin);
-        let sphere2: Rc<Box<dyn Hittable>> =
+        let sphere2: Arc<Box<dyn Hittable>> =
             rc_box_sphere!(Point3::with_values(0.0, 2.0, 0.0), 2.0, &perlin);
         objects.add(sphere1);
         objects.add(sphere2);
 
-        let difflight: Rc<Box<dyn Material>> = rc_box_diffuse_light!(4.0);
-        let xy_rect: Rc<Box<dyn Hittable>> = rc_box_xy_rect!(3.0, 5.0, 1.0, 3.0, -2.0, &difflight);
+        let difflight: Arc<Box<dyn Material>> = rc_box_diffuse_light!(4.0);
+        let xy_rect: Arc<Box<dyn Hittable>> = rc_box_xy_rect!(3.0, 5.0, 1.0, 3.0, -2.0, &difflight);
         objects.add(xy_rect);
 
         objects
@@ -378,10 +378,10 @@ impl Scene {
     pub fn earth() -> HittableList {
         let mut objects = HittableList::new();
 
-        let earth_texture: Rc<Box<dyn Texture>> = rc_box_image_texture!("earthmap.jpg");
-        let earth_material: Rc<Box<dyn Material>> = rc_box_lambertian!(&earth_texture);
+        let earth_texture: Arc<Box<dyn Texture>> = rc_box_image_texture!("earthmap.jpg");
+        let earth_material: Arc<Box<dyn Material>> = rc_box_lambertian!(&earth_texture);
 
-        let sphere: Rc<Box<dyn Hittable>> =
+        let sphere: Arc<Box<dyn Hittable>> =
             rc_box_sphere!(Point3::with_value(0.0), 2.0, &earth_material);
         objects.add(sphere);
         objects
@@ -390,12 +390,12 @@ impl Scene {
     pub fn two_perlin_spheres() -> HittableList {
         let mut objects = HittableList::new();
 
-        let perlin_texture: Rc<Box<dyn Texture>> = rc_box_noise_texture!(4.0);
-        let perlin: Rc<Box<dyn Material>> = rc_box_lambertian!(&perlin_texture);
+        let perlin_texture: Arc<Box<dyn Texture>> = rc_box_noise_texture!(4.0);
+        let perlin: Arc<Box<dyn Material>> = rc_box_lambertian!(&perlin_texture);
 
-        let sphere1: Rc<Box<dyn Hittable>> =
+        let sphere1: Arc<Box<dyn Hittable>> =
             rc_box_sphere!(Point3::with_values(0.0, -1000.0, 0.0), 1000.0, &perlin);
-        let sphere2: Rc<Box<dyn Hittable>> =
+        let sphere2: Arc<Box<dyn Hittable>> =
             rc_box_sphere!(Point3::with_values(0.0, 2.0, 0.0), 2.0, &perlin);
         objects.add(sphere1);
         objects.add(sphere2);
@@ -408,12 +408,12 @@ impl Scene {
 
         let odd = Color::with_values(0.2, 0.3, 0.1);
         let even = Color::with_values(0.9, 0.9, 0.9);
-        let checker_texture: Rc<Box<dyn Texture>> = rc_box_checker_texture!(odd, even);
-        let checker: Rc<Box<dyn Material>> = rc_box_lambertian!(&checker_texture);
+        let checker_texture: Arc<Box<dyn Texture>> = rc_box_checker_texture!(odd, even);
+        let checker: Arc<Box<dyn Material>> = rc_box_lambertian!(&checker_texture);
 
-        let sphere1: Rc<Box<dyn Hittable>> =
+        let sphere1: Arc<Box<dyn Hittable>> =
             rc_box_sphere!(Point3::with_values(0.0, -10.0, 0.0), 10.0, &checker);
-        let sphere2: Rc<Box<dyn Hittable>> =
+        let sphere2: Arc<Box<dyn Hittable>> =
             rc_box_sphere!(Point3::with_values(0.0, 10.0, 0.0), 10.0, &checker);
         objects.add(sphere1);
         objects.add(sphere2);
@@ -427,8 +427,8 @@ impl Scene {
 
         let odd = Color::with_values(0.2, 0.3, 0.1);
         let even = Color::with_values(0.9, 0.9, 0.9);
-        let checker_texture: Rc<Box<dyn Texture>> = rc_box_checker_texture!(odd, even);
-        let ground_material: Rc<Box<dyn Material>> = rc_box_lambertian!(&checker_texture);
+        let checker_texture: Arc<Box<dyn Texture>> = rc_box_checker_texture!(odd, even);
+        let ground_material: Arc<Box<dyn Material>> = rc_box_lambertian!(&checker_texture);
         world.add(rc_box_sphere!(
             Point3::with_values(0.0, -1000.0, 0.0),
             1000.0,
@@ -445,7 +445,7 @@ impl Scene {
                 );
 
                 if (center - Point3::with_values(4.0, 0.2, 0.0)).length() > 0.9 {
-                    let sphere_material: Rc<Box<dyn Material>>;
+                    let sphere_material: Arc<Box<dyn Material>>;
 
                     if choose_mat < 0.8 {
                         // NOTE: diffuse
@@ -478,21 +478,21 @@ impl Scene {
             }
         }
 
-        let material_1: Rc<Box<dyn Material>> = rc_box_dielectric!(1.5);
+        let material_1: Arc<Box<dyn Material>> = rc_box_dielectric!(1.5);
         world.add(rc_box_sphere!(
             Point3::with_values(0.0, 1.0, 0.0),
             1.0,
             &material_1
         ));
 
-        let material_2: Rc<Box<dyn Material>> = rc_box_lambertian!(0.4, 0.2, 0.1);
+        let material_2: Arc<Box<dyn Material>> = rc_box_lambertian!(0.4, 0.2, 0.1);
         world.add(rc_box_sphere!(
             Point3::with_values(-4.0, 1.0, 0.0),
             1.0,
             &material_2
         ));
 
-        let material_3: Rc<Box<dyn Material>> = rc_box_metal!(0.7, 0.6, 0.5, 0.0);
+        let material_3: Arc<Box<dyn Material>> = rc_box_metal!(0.7, 0.6, 0.5, 0.0);
         world.add(rc_box_sphere!(
             Point3::with_values(4.0, 1.0, 0.0),
             1.0,

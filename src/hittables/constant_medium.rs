@@ -1,31 +1,36 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
 use rand::Rng;
 
-use crate::{materials::{material::Material, isotropic::Isotropic}, ray::Ray, aabb::AABB, vec3::{Color, Vec3}};
+use crate::{
+    aabb::AABB,
+    materials::{isotropic::Isotropic, material::Material},
+    ray::Ray,
+    vec3::{Color, Vec3},
+};
 
-use super::hittable::{Hittable, HitRecord};
+use super::hittable::{HitRecord, Hittable};
 
 pub struct ConstantMedium {
-    boundary: Rc<Box<dyn Hittable>>,
-    phase_function: Rc<Box<dyn Material>>,
+    boundary: Arc<Box<dyn Hittable>>,
+    phase_function: Arc<Box<dyn Material>>,
     neg_inv_density: f64,
 }
 
 impl ConstantMedium {
-    pub fn new(b: &Rc<Box<dyn Hittable>>, d: f64, a: &Rc<Box<dyn Material>>) -> Self {
+    pub fn new(b: &Arc<Box<dyn Hittable>>, d: f64, a: &Arc<Box<dyn Material>>) -> Self {
         Self {
-            boundary: Rc::clone(b),
-            neg_inv_density: -1.0/d,
-            phase_function: Rc::clone(a),
+            boundary: Arc::clone(b),
+            neg_inv_density: -1.0 / d,
+            phase_function: Arc::clone(a),
         }
     }
 
-    pub fn with_color(b: &Rc<Box<dyn Hittable>>, d: f64, a: Color) -> Self {
+    pub fn with_color(b: &Arc<Box<dyn Hittable>>, d: f64, a: Color) -> Self {
         Self {
-            boundary: Rc::clone(b),
-            neg_inv_density: -1.0/d,
-            phase_function: Rc::new(Box::new(Isotropic::new(a))),
+            boundary: Arc::clone(b),
+            neg_inv_density: -1.0 / d,
+            phase_function: Arc::new(Box::new(Isotropic::new(a))),
         }
     }
 }
@@ -39,10 +44,16 @@ impl Hittable for ConstantMedium {
         let mut rec1: HitRecord = Default::default();
         let mut rec2: HitRecord = Default::default();
 
-        if !self.boundary.hit(ray, -f64::INFINITY, f64::INFINITY, &mut rec1) {
+        if !self
+            .boundary
+            .hit(ray, -f64::INFINITY, f64::INFINITY, &mut rec1)
+        {
             return false;
         }
-        if !self.boundary.hit(ray, rec1.t + 0.0001, f64::INFINITY, &mut rec2) {
+        if !self
+            .boundary
+            .hit(ray, rec1.t + 0.0001, f64::INFINITY, &mut rec2)
+        {
             return false;
         }
 
@@ -50,8 +61,12 @@ impl Hittable for ConstantMedium {
             println!("\nt_min = {0}, t_max = {1}", rec1.t, rec2.t);
         }
 
-        if rec1.t < t_min { rec1.t = t_min; }
-        if rec2.t > t_max { rec2.t = t_max; }
+        if rec1.t < t_min {
+            rec1.t = t_min;
+        }
+        if rec2.t > t_max {
+            rec2.t = t_max;
+        }
 
         if rec1.t >= rec2.t {
             return false;
@@ -73,12 +88,15 @@ impl Hittable for ConstantMedium {
         rec.p = ray.at(rec.t);
 
         if debugging {
-            println!("hit_distance = {}\nnrec.t = {}\nnrec.p = {}", hit_distance, rec.t, rec.p);
+            println!(
+                "hit_distance = {}\nnrec.t = {}\nnrec.p = {}",
+                hit_distance, rec.t, rec.p
+            );
         }
 
         rec.normal = Vec3::with_values(1.0, 0.0, 0.0); // arbitrary
         rec.front_face = true; // also arbitrary
-        rec.mat_ptr = Rc::clone(&self.phase_function);
+        rec.mat_ptr = Arc::clone(&self.phase_function);
 
         true
     }
@@ -91,17 +109,9 @@ impl Hittable for ConstantMedium {
 #[macro_export]
 macro_rules! rc_box_constant_medium {
     ( $b:expr, $d:expr, $color:expr, Color ) => {
-        Rc::new(Box::new(ConstantMedium::with_color(
-            $b,
-            $d,
-            $color
-        )))
+        Arc::new(Box::new(ConstantMedium::with_color($b, $d, $color)))
     };
     ( $b:expr, $d:expr, $mat_ptr:expr ) => {
-        Rc::new(Box::new(ConstantMedium::new(
-            $b,
-            $d,
-            $mat_ptr
-        )))
+        Arc::new(Box::new(ConstantMedium::new($b, $d, $mat_ptr)))
     };
 }

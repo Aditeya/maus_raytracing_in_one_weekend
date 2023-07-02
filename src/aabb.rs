@@ -1,6 +1,6 @@
 use std::mem::swap;
 
-use crate::{vec3::Point3, ray::Ray};
+use crate::{ray::Ray, vec3::Point3};
 
 #[derive(Default, Copy, Clone)]
 pub struct AABB {
@@ -9,20 +9,17 @@ pub struct AABB {
 }
 
 impl AABB {
-    pub fn new(minimum: Point3, maximum: Point3, ) -> Self {
-        Self {
-            minimum,
-            maximum,
-        }
+    pub fn new(minimum: Point3, maximum: Point3) -> Self {
+        Self { minimum, maximum }
     }
 
     pub fn min(&self) -> Point3 {
         self.minimum
-    } 
+    }
 
     pub fn max(&self) -> Point3 {
         self.maximum
-    } 
+    }
 
     pub fn hit(&self, ray: &Ray, mut t_min: f64, mut t_max: f64) -> bool {
         for a in 0..3 {

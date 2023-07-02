@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
 use crate::{
     aabb::AABB,
@@ -14,18 +14,18 @@ pub struct XZRect {
     z0: f64,
     z1: f64,
     k: f64,
-    mat_ptr: Rc<Box<dyn Material>>,
+    mat_ptr: Arc<Box<dyn Material>>,
 }
 
 impl XZRect {
-    pub fn new(x0: f64, x1: f64, z0: f64, z1: f64, k: f64, mp: &Rc<Box<dyn Material>>) -> Self {
+    pub fn new(x0: f64, x1: f64, z0: f64, z1: f64, k: f64, mp: &Arc<Box<dyn Material>>) -> Self {
         Self {
             x0,
             x1,
             z0,
             z1,
             k,
-            mat_ptr: Rc::clone(mp),
+            mat_ptr: Arc::clone(mp),
         }
     }
 }
@@ -49,7 +49,7 @@ impl Hittable for XZRect {
 
         let outward_normal = Vec3::with_values(0.0, 1.0, 0.0);
         rec.set_face_normal(ray, &outward_normal);
-        rec.mat_ptr = Rc::clone(&self.mat_ptr);
+        rec.mat_ptr = Arc::clone(&self.mat_ptr);
         rec.p = ray.at(t);
         true
     }
@@ -65,9 +65,9 @@ impl Hittable for XZRect {
 #[macro_export]
 macro_rules! rc_box_xz_rect {
     ( $x0:literal, $x1:literal, $z0:literal, $z1:literal, $k:literal, $mat_ptr:expr ) => {
-        Rc::new(Box::new(XZRect::new($x0, $x1, $z0, $z1, $k, $mat_ptr)))
+        Arc::new(Box::new(XZRect::new($x0, $x1, $z0, $z1, $k, $mat_ptr)))
     };
     ( $x0:expr, $x1:expr, $z0:expr, $z1:expr, $k:expr, $mat_ptr:expr ) => {
-        Rc::new(Box::new(XZRect::new($x0, $x1, $z0, $z1, $k, $mat_ptr)))
+        Arc::new(Box::new(XZRect::new($x0, $x1, $z0, $z1, $k, $mat_ptr)))
     };
 }

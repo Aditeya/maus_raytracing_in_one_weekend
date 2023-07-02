@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
 use super::hittable::{HitRecord, Hittable};
 use crate::{
@@ -14,7 +14,7 @@ pub struct MovingSphere {
     time0: f64,
     time1: f64,
     radius: f64,
-    mat_ptr: Rc<Box<dyn Material>>,
+    mat_ptr: Arc<Box<dyn Material>>,
 }
 
 impl MovingSphere {
@@ -24,7 +24,7 @@ impl MovingSphere {
         time0: f64,
         time1: f64,
         radius: f64,
-        mat_ptr: &Rc<Box<dyn Material>>,
+        mat_ptr: &Arc<Box<dyn Material>>,
     ) -> Self {
         Self {
             center0,
@@ -32,7 +32,7 @@ impl MovingSphere {
             time0,
             time1,
             radius,
-            mat_ptr: Rc::clone(mat_ptr),
+            mat_ptr: Arc::clone(mat_ptr),
         }
     }
 
@@ -70,7 +70,7 @@ impl Hittable for MovingSphere {
         rec.p = ray.at(rec.t);
         let outward_normal = (rec.p - self.center(ray.time())) / self.radius;
         rec.set_face_normal(ray, &outward_normal);
-        rec.mat_ptr = Rc::clone(&self.mat_ptr);
+        rec.mat_ptr = Arc::clone(&self.mat_ptr);
 
         true
     }
@@ -79,16 +79,10 @@ impl Hittable for MovingSphere {
         let r_vec = Vec3::with_value(self.radius);
 
         let center = self.center(time0);
-        let box0 = AABB::new(
-            center - r_vec,
-            center + r_vec,
-        );
+        let box0 = AABB::new(center - r_vec, center + r_vec);
 
         let center = self.center(time1);
-        let box1 = AABB::new(
-            center - r_vec,
-            center + r_vec,
-        );
+        let box1 = AABB::new(center - r_vec, center + r_vec);
 
         *output_box = surrounding_box(&box0, &box1);
         true
@@ -98,13 +92,8 @@ impl Hittable for MovingSphere {
 #[macro_export]
 macro_rules! rc_box_moving_sphere {
     ( $center1:expr, $center2:expr, $time0:literal, $time1:literal, $radius:literal, $mat_ptr:expr ) => {
-        Rc::new(Box::new(MovingSphere::new(
-            $center1,
-            $center2,
-            $time0,
-            $time1,
-            $radius,
-            $mat_ptr
+        Arc::new(Box::new(MovingSphere::new(
+            $center1, $center2, $time0, $time1, $radius, $mat_ptr,
         )))
     };
 }

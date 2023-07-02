@@ -1,5 +1,5 @@
 use std::f64::consts::PI;
-use std::rc::Rc;
+use std::sync::Arc;
 
 use super::hittable::{HitRecord, Hittable};
 use crate::{
@@ -12,15 +12,15 @@ use crate::{
 pub struct Sphere {
     center: Point3,
     radius: f64,
-    mat_ptr: Rc<Box<dyn Material>>,
+    mat_ptr: Arc<Box<dyn Material>>,
 }
 
 impl Sphere {
-    pub fn new(center: Point3, radius: f64, mat_ptr: &Rc<Box<dyn Material>>) -> Self {
+    pub fn new(center: Point3, radius: f64, mat_ptr: &Arc<Box<dyn Material>>) -> Self {
         Self {
             center,
             radius,
-            mat_ptr: Rc::clone(mat_ptr),
+            mat_ptr: Arc::clone(mat_ptr),
         }
     }
 
@@ -62,7 +62,7 @@ impl Hittable for Sphere {
         let outward_normal = (rec.p - self.center) / self.radius;
         rec.set_face_normal(ray, &outward_normal);
         Sphere::get_sphere_uv(&outward_normal, &mut rec.u, &mut rec.v);
-        rec.mat_ptr = Rc::clone(&self.mat_ptr);
+        rec.mat_ptr = Arc::clone(&self.mat_ptr);
 
         true
     }
@@ -80,10 +80,6 @@ impl Hittable for Sphere {
 #[macro_export]
 macro_rules! rc_box_sphere {
     ( $point:expr, $radius:literal, $mat_ptr:expr ) => {
-        Rc::new(Box::new(Sphere::new(
-            $point,
-            $radius,
-            $mat_ptr
-        )))
+        Arc::new(Box::new(Sphere::new($point, $radius, $mat_ptr)))
     };
 }

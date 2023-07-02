@@ -1,26 +1,26 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
 use crate::vec3::{Color, Point3};
 
 use super::texture::{SolidColor, Texture};
 
 pub struct CheckerTexture {
-    odd: Rc<Box<dyn Texture>>,
-    even: Rc<Box<dyn Texture>>,
+    odd: Arc<Box<dyn Texture>>,
+    even: Arc<Box<dyn Texture>>,
 }
 
 impl CheckerTexture {
-    pub fn new(odd: &Rc<Box<dyn Texture>>, even: &Rc<Box<dyn Texture>>) -> Self {
+    pub fn new(odd: &Arc<Box<dyn Texture>>, even: &Arc<Box<dyn Texture>>) -> Self {
         Self {
-            odd: Rc::clone(odd),
-            even: Rc::clone(even),
+            odd: Arc::clone(odd),
+            even: Arc::clone(even),
         }
     }
 
     pub fn with_color(odd: Color, even: Color) -> Self {
         Self {
-            odd: Rc::new(Box::new(SolidColor::new(odd))),
-            even: Rc::new(Box::new(SolidColor::new(even))),
+            odd: Arc::new(Box::new(SolidColor::new(odd))),
+            even: Arc::new(Box::new(SolidColor::new(even))),
         }
     }
 }
@@ -39,6 +39,6 @@ impl Texture for CheckerTexture {
 #[macro_export]
 macro_rules! rc_box_checker_texture {
     ($odd:expr, $even:expr) => {
-        Rc::new(Box::new(CheckerTexture::with_color($odd, $even)))
+        Arc::new(Box::new(CheckerTexture::with_color($odd, $even)))
     };
 }

@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
 use crate::{
     hittables::hittable::HitRecord,
@@ -10,19 +10,19 @@ use crate::{
 use super::material::Material;
 
 pub struct Lambertian {
-    pub albedo: Rc<Box<dyn Texture>>,
+    pub albedo: Arc<Box<dyn Texture>>,
 }
 
 impl Lambertian {
-    pub fn new(albedo: &Rc<Box<dyn Texture>>) -> Self {
+    pub fn new(albedo: &Arc<Box<dyn Texture>>) -> Self {
         Self {
-            albedo: Rc::clone(albedo),
+            albedo: Arc::clone(albedo),
         }
     }
 
     pub fn with_color(albedo: Color) -> Self {
         Self {
-            albedo: Rc::new(Box::new(SolidColor::new(albedo))),
+            albedo: Arc::new(Box::new(SolidColor::new(albedo))),
         }
     }
 }
@@ -30,7 +30,7 @@ impl Lambertian {
 impl Default for Lambertian {
     fn default() -> Self {
         Self {
-            albedo: Rc::new(Box::new(SolidColor::with_values(1.0, 1.0, 1.0))),
+            albedo: Arc::new(Box::new(SolidColor::with_values(1.0, 1.0, 1.0))),
         }
     }
 }
@@ -58,23 +58,17 @@ impl Material for Lambertian {
 #[macro_export]
 macro_rules! rc_box_lambertian {
     ( $rgb:literal ) => {
-        Rc::new(Box::new(Lambertian::with_color(
-            Color::with_value($rgb)
-        )))
+        Arc::new(Box::new(Lambertian::with_color(Color::with_value($rgb))))
     };
     ( $red:literal, $green:literal, $blue:literal ) => {
-        Rc::new(Box::new(Lambertian::with_color(
-            Color::with_values($red, $green, $blue)
-        )))
+        Arc::new(Box::new(Lambertian::with_color(Color::with_values(
+            $red, $green, $blue,
+        ))))
     };
     ( Color, $color:expr ) => {
-        Rc::new(Box::new(Lambertian::with_color(
-            $color
-        )))
+        Arc::new(Box::new(Lambertian::with_color($color)))
     };
     ( $material:expr ) => {
-        Rc::new(Box::new(Lambertian::new(
-            $material
-        )))
+        Arc::new(Box::new(Lambertian::new($material)))
     };
 }

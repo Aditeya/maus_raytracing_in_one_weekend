@@ -135,6 +135,6 @@ impl Texture for NoiseTexture {
 #[macro_export]
 macro_rules! rc_box_noise_texture {
     ($scale:literal) => {
-        Rc::new(Box::new(NoiseTexture::new($scale)))
+        Arc::new(Box::new(NoiseTexture::new($scale)))
     };
 }

@@ -1,11 +1,15 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
-use crate::{vec3::{Vec3, Point3}, aabb::AABB, ray::Ray};
+use crate::{
+    aabb::AABB,
+    ray::Ray,
+    vec3::{Point3, Vec3},
+};
 
-use super::hittable::{Hittable, HitRecord};
+use super::hittable::{HitRecord, Hittable};
 
 pub struct RotateY {
-    ptr: Rc<Box<dyn Hittable>>,
+    ptr: Arc<Box<dyn Hittable>>,
     sin_theta: f64,
     cos_theta: f64,
     has_box: bool,
@@ -13,7 +17,7 @@ pub struct RotateY {
 }
 
 impl RotateY {
-    pub fn new(p: &Rc<Box<dyn Hittable>>, angle: f64) -> Self {
+    pub fn new(p: &Arc<Box<dyn Hittable>>, angle: f64) -> Self {
         let radians = angle.to_radians();
         let sin_theta = radians.sin();
         let cos_theta = radians.cos();
@@ -31,12 +35,12 @@ impl RotateY {
                     let j = j as f64;
                     let k = k as f64;
 
-                    let x = i*bbox.max().x() + (1.0-i)*bbox.min().x();
-                    let y = j*bbox.max().y() + (1.0-j)*bbox.min().y();
-                    let z = k*bbox.max().z() + (1.0-k)*bbox.min().z();
+                    let x = i * bbox.max().x() + (1.0 - i) * bbox.min().x();
+                    let y = j * bbox.max().y() + (1.0 - j) * bbox.min().y();
+                    let z = k * bbox.max().z() + (1.0 - k) * bbox.min().z();
 
-                    let newx = cos_theta*x + sin_theta*z;
-                    let newz = -sin_theta*x + cos_theta*z;
+                    let newx = cos_theta * x + sin_theta * z;
+                    let newz = -sin_theta * x + cos_theta * z;
 
                     let tester = Vec3::with_values(newx, y, newz);
 
@@ -51,7 +55,7 @@ impl RotateY {
         bbox = AABB::new(min, max);
 
         Self {
-            ptr: Rc::clone(p),
+            ptr: Arc::clone(p),
             sin_theta,
             cos_theta,
             has_box,
@@ -65,11 +69,11 @@ impl Hittable for RotateY {
         let mut origin = ray.origin();
         let mut direction = ray.direction();
 
-        origin[0] = self.cos_theta*ray.origin()[0] - self.sin_theta*ray.origin()[2];
-        origin[2] = self.sin_theta*ray.origin()[0] + self.cos_theta*ray.origin()[2];
+        origin[0] = self.cos_theta * ray.origin()[0] - self.sin_theta * ray.origin()[2];
+        origin[2] = self.sin_theta * ray.origin()[0] + self.cos_theta * ray.origin()[2];
 
-        direction[0] = self.cos_theta*ray.direction()[0] - self.sin_theta*ray.direction()[2];
-        direction[2] = self.sin_theta*ray.direction()[0] + self.cos_theta*ray.direction()[2];
+        direction[0] = self.cos_theta * ray.direction()[0] - self.sin_theta * ray.direction()[2];
+        direction[2] = self.sin_theta * ray.direction()[0] + self.cos_theta * ray.direction()[2];
 
         let rotated_ray = Ray::new(origin, direction, ray.time());
 
@@ -80,11 +84,11 @@ impl Hittable for RotateY {
         let mut p = rec.p;
         let mut normal = rec.normal;
 
-        p[0] = self.cos_theta*rec.p[0] + self.sin_theta*rec.p[2];
-        p[2] = -self.sin_theta*rec.p[0] + self.cos_theta*rec.p[2];
+        p[0] = self.cos_theta * rec.p[0] + self.sin_theta * rec.p[2];
+        p[2] = -self.sin_theta * rec.p[0] + self.cos_theta * rec.p[2];
 
-        normal[0] = self.cos_theta*rec.normal[0] + self.sin_theta*rec.normal[2];
-        normal[2] = -self.sin_theta*rec.normal[0] + self.cos_theta*rec.normal[2];
+        normal[0] = self.cos_theta * rec.normal[0] + self.sin_theta * rec.normal[2];
+        normal[2] = -self.sin_theta * rec.normal[0] + self.cos_theta * rec.normal[2];
 
         rec.p = p;
         rec.set_face_normal(&rotated_ray, &normal);
@@ -101,9 +105,6 @@ impl Hittable for RotateY {
 #[macro_export]
 macro_rules! rc_box_rotate_y {
     ( $ptr:expr, $angle:expr ) => {
-        Rc::new(Box::new(RotateY::new(
-            $ptr,
-            $angle
-        )))
+        Arc::new(Box::new(RotateY::new($ptr, $angle)))
     };
 }

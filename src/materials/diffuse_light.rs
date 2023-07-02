@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
 use super::material::Material;
 use crate::{
@@ -9,19 +9,19 @@ use crate::{
 };
 
 pub struct DiffuseLight {
-    pub emit: Rc<Box<dyn Texture>>,
+    pub emit: Arc<Box<dyn Texture>>,
 }
 
 impl DiffuseLight {
-    pub fn new(emit: &Rc<Box<dyn Texture>>) -> Self {
+    pub fn new(emit: &Arc<Box<dyn Texture>>) -> Self {
         Self {
-            emit: Rc::clone(emit),
+            emit: Arc::clone(emit),
         }
     }
 
     pub fn with_color(color: Color) -> Self {
         Self {
-            emit: Rc::new(Box::new(SolidColor::new(color))),
+            emit: Arc::new(Box::new(SolidColor::new(color))),
         }
     }
 }
@@ -45,17 +45,17 @@ impl Material for DiffuseLight {
 #[macro_export]
 macro_rules! rc_box_diffuse_light {
     ( $rgb:literal ) => {
-        Rc::new(Box::new(DiffuseLight::with_color(Color::with_value($rgb))))
+        Arc::new(Box::new(DiffuseLight::with_color(Color::with_value($rgb))))
     };
     ( $red:literal, $green:literal, $blue:literal ) => {
-        Rc::new(Box::new(DiffuseLight::with_color(Color::with_values(
+        Arc::new(Box::new(DiffuseLight::with_color(Color::with_values(
             $red, $green, $blue,
         ))))
     };
     ( Color, $color:expr ) => {
-        Rc::new(Box::new(DiffuseLight::with_color($color)))
+        Arc::new(Box::new(DiffuseLight::with_color($color)))
     };
     ( $material:expr ) => {
-        Rc::new(Box::new(DiffuseLight::new($material)))
+        Arc::new(Box::new(DiffuseLight::new($material)))
     };
 }
