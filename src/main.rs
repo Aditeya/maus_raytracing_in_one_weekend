@@ -72,7 +72,6 @@ fn main() {
         ]));
 
     (0..settings.image_height).into_par_iter().for_each(|j| {
-        progress_bar.lock().unwrap().inc(1);
         let buf_j = (settings.image_height - 1 - j) as usize;
 
         (0..settings.image_width).into_par_iter().for_each(|i| {
@@ -95,7 +94,9 @@ fn main() {
                 pixel_color,
                 settings.samples_per_pixel,
             );
-        })
+        });
+
+        progress_bar.lock().unwrap().inc(1);
     });
 
     let img = img.lock().unwrap().concat().concat();
